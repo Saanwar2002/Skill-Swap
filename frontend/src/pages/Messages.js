@@ -6,14 +6,13 @@ import {
   MagnifyingGlassIcon, 
   EllipsisVerticalIcon,
   PhoneIcon,
-  VideoIcon,
+  VideoCameraIcon,
   UserCircleIcon,
   XMarkIcon,
   PlusIcon,
   FaceSmileIcon,
   PaperClipIcon,
-  CheckIcon,
-  CheckCheckIcon
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { UserIcon } from '@heroicons/react/24/solid';
 
