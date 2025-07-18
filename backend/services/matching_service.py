@@ -429,7 +429,7 @@ class MatchingService:
                             compatibility = await self._calculate_compatibility_score(user, other_user)
                             
                             suggestions.append({
-                                "user": UserResponse(**other_user.dict()),
+                                "user": UserResponse(**other_user.dict(), average_rating=other_user.average_rating),
                                 "compatibility_score": compatibility,
                                 "suggestion_reason": f"Users with similar interests also matched with this person"
                             })
