@@ -106,6 +106,16 @@ async def startup_event():
         logger.info("Default skills initialized")
     except Exception as e:
         logger.error(f"Failed to initialize default skills: {str(e)}")
+    
+    # Initialize gamification system
+    try:
+        from services.gamification_service import GamificationService
+        gamification_service = GamificationService(db)
+        await gamification_service.create_default_badges()
+        await gamification_service.create_default_achievements()
+        logger.info("Gamification system initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize gamification system: {str(e)}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
