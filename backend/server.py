@@ -74,6 +74,7 @@ api_router.include_router(create_skill_router(db))
 api_router.include_router(create_matching_router(db))
 api_router.include_router(create_session_router(db))
 api_router.include_router(create_message_router(db))
+api_router.include_router(create_gamification_router(db))
 
 # Include the main router in the app
 app.include_router(api_router)
