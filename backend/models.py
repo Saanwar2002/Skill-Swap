@@ -398,3 +398,137 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     user_id: Optional[str] = None
+
+
+# Gamification Models
+class BadgeType(str, Enum):
+    SKILL_MASTER = "skill_master"
+    MENTOR = "mentor"
+    LEARNER = "learner"
+    SOCIAL = "social"
+    MILESTONE = "milestone"
+    SPECIAL = "special"
+
+
+class AchievementType(str, Enum):
+    SKILL_EARNED = "skill_earned"
+    SESSIONS_COMPLETED = "sessions_completed"
+    MENTORING_MILESTONE = "mentoring_milestone"
+    LEARNING_MILESTONE = "learning_milestone"
+    SOCIAL_MILESTONE = "social_milestone"
+    RATING_MILESTONE = "rating_milestone"
+    STREAK_MILESTONE = "streak_milestone"
+
+
+class Badge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    badge_type: BadgeType
+    icon_url: Optional[str] = None
+    icon_data: Optional[str] = None  # base64 encoded icon
+    color: str = "#3B82F6"  # default blue color
+    requirements: Dict[str, Any] = {}  # e.g., {"sessions_completed": 10}
+    skill_coins_reward: int = 0
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserBadge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    badge_id: str
+    earned_at: datetime = Field(default_factory=datetime.utcnow)
+    progress: Dict[str, Any] = {}  # Progress towards badge requirements
+    is_displayed: bool = True  # Whether user displays this badge
+
+
+class Achievement(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    achievement_type: AchievementType
+    icon_url: Optional[str] = None
+    icon_data: Optional[str] = None  # base64 encoded icon
+    color: str = "#10B981"  # default green color
+    requirements: Dict[str, Any] = {}
+    skill_coins_reward: int = 0
+    badge_reward_id: Optional[str] = None  # Badge awarded with this achievement
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class UserAchievement(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    achievement_id: str
+    earned_at: datetime = Field(default_factory=datetime.utcnow)
+    progress: Dict[str, Any] = {}  # Progress towards achievement
+    is_notified: bool = False  # Whether user has been notified
+
+
+class LeaderboardEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    skill_coins: int = 0
+    total_sessions: int = 0
+    teaching_sessions: int = 0
+    learning_sessions: int = 0
+    average_rating: float = 0.0
+    badges_count: int = 0
+    achievements_count: int = 0
+    current_streak: int = 0  # Days active streak
+    longest_streak: int = 0
+    last_active: datetime = Field(default_factory=datetime.utcnow)
+    rank: int = 0  # Position in leaderboard
+    rank_change: int = 0  # Change from previous period
+
+
+class SkillCoinTransaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    amount: int  # Positive for earned, negative for spent
+    transaction_type: str  # "earned", "spent", "bonus", "refund"
+    source: str  # "session_completed", "achievement", "badge", "admin"
+    source_id: Optional[str] = None  # ID of session, achievement, etc.
+    description: str
+    balance_after: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Gamification Request/Response Models
+class BadgeCreate(BaseModel):
+    name: str
+    description: str
+    badge_type: BadgeType
+    icon_data: Optional[str] = None
+    color: str = "#3B82F6"
+    requirements: Dict[str, Any] = {}
+    skill_coins_reward: int = 0
+
+
+class AchievementCreate(BaseModel):
+    name: str
+    description: str
+    achievement_type: AchievementType
+    icon_data: Optional[str] = None
+    color: str = "#10B981"
+    requirements: Dict[str, Any] = {}
+    skill_coins_reward: int = 0
+    badge_reward_id: Optional[str] = None
+
+
+class UserProgress(BaseModel):
+    user_id: str
+    skill_coins: int
+    total_sessions: int
+    teaching_sessions: int
+    learning_sessions: int
+    average_rating: float
+    badges: List[UserBadge]
+    achievements: List[UserAchievement]
+    current_streak: int
+    longest_streak: int
+    leaderboard_rank: int
+    recent_activities: List[Dict[str, Any]]
