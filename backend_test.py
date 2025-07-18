@@ -1235,6 +1235,23 @@ class SkillSwapTester:
         self.test_get_match_suggestions()
         self.test_get_matching_analytics()
         
+        # Session Management tests (NEW FEATURES)
+        print("\n🎯 Testing Session Management System...")
+        self.test_create_session()
+        self.test_get_my_sessions()
+        self.test_get_upcoming_sessions()
+        self.test_get_specific_session()
+        self.test_update_session()
+        self.test_start_session()
+        self.test_end_session()
+        self.test_submit_session_feedback()
+        self.test_cancel_session()
+        self.test_get_session_statistics()
+        self.test_get_user_availability()
+        self.test_search_sessions()
+        self.test_session_permission_controls()
+        self.test_session_authentication_required()
+        
         # Print summary
         self.print_summary()
     
