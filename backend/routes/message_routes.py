@@ -1,19 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import List, Optional
 import logging
 from datetime import datetime
 import json
 
-from auth import get_current_user
 from models import Message, Conversation, MessageCreate, User, MessageType
 from services.message_service import MessageService
 from services.websocket_manager import websocket_manager
+from auth import AuthService
 
 logger = logging.getLogger(__name__)
+security = HTTPBearer()
 
 def create_message_router(db):
     router = APIRouter(prefix="/messages", tags=["messages"])
     message_service = MessageService(db)
+    auth_service = AuthService(db)
+    
+    async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+        """Get current authenticated user"""
+        try:
+            token = credentials.credentials
+            user = await auth_service.get_current_user(token)
+            return user
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            raise HTTPException(
+                status_code=401,
+                detail="Could not validate credentials"
+            )
     
     # WebSocket endpoint for real-time messaging
     @router.websocket("/ws/{user_id}")
