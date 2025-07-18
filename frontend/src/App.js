@@ -57,6 +57,17 @@ function App() {
               }
             />
             
+            <Route
+              path="/sessions"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Sessions />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
