@@ -326,7 +326,7 @@ frontend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Browse skills, view matches, connect with users - PENDING"
+        comment: "Building skill marketplace with user browsing and AI matching - IN PROGRESS"
 
   - task: "Video Chat Integration"
     implemented: false
