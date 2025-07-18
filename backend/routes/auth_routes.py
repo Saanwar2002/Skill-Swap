@@ -3,6 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from motor.motor_asyncio import AsyncIOMotorClient
 from models import UserCreate, UserLogin, UserResponse, Token, User
 from auth import AuthService
+from pydantic import BaseModel, EmailStr
 import logging
 
 logger = logging.getLogger(__name__)
