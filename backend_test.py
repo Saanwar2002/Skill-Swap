@@ -969,7 +969,7 @@ class SkillSwapTester:
                 "scheduled_end": end_time.isoformat(),
                 "timezone": "UTC",
                 "session_type": "video",
-                "skill_coins_cost": 15
+                "skill_coins_paid": 15
             }
             
             create_response = self.make_request("POST", "/sessions/", session_data)
