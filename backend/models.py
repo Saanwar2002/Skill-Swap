@@ -295,6 +295,36 @@ class UserResponse(BaseModel):
     rating_count: int
 
 
+class SessionCreate(BaseModel):
+    teacher_id: str
+    learner_id: str
+    skill_id: str
+    skill_name: str
+    title: str
+    description: Optional[str] = None
+    scheduled_start: datetime
+    scheduled_end: datetime
+    timezone: str = "UTC"
+    session_type: str = "video"
+    learning_objectives: List[str] = []
+    skill_coins_paid: int = 0
+
+
+class SessionUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    scheduled_start: Optional[datetime] = None
+    scheduled_end: Optional[datetime] = None
+    timezone: Optional[str] = None
+    session_type: Optional[str] = None
+    learning_objectives: Optional[List[str]] = None
+    notes: Optional[str] = None
+    meeting_link: Optional[str] = None
+    homework_assigned: Optional[str] = None
+    homework_completed: Optional[bool] = None
+    objectives_completed: Optional[List[str]] = None
+
+
 class SkillCreate(BaseModel):
     name: str
     category: str
