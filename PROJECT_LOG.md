@@ -160,9 +160,9 @@ A comprehensive Skill Swap Marketplace with AI-powered matching where users can 
 - 🚧 **Pending**: 4/11 tasks (36.4%)
 
 ### Priority Breakdown
-- 🔥 **High Priority Pending**: 2 tasks
-- 🔶 **Medium Priority Pending**: 3 tasks
-- 🔹 **Low Priority Pending**: 3 tasks
+- 🔥 **High Priority Pending**: 2 tasks (Backend: Session Management, Real-time Messaging)
+- 🔶 **Medium Priority Pending**: 3 tasks (Video Chat, Real-time Chat UI, Session Management UI)
+- 🔹 **Low Priority Pending**: 3 tasks (Gamification Backend, Community Features, Gamification UI)
 
 ---
 
