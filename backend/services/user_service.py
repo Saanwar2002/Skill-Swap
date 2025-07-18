@@ -6,6 +6,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def user_to_response(user: User) -> UserResponse:
+    """Convert User model to UserResponse with calculated fields"""
+    user_dict = user.dict()
+    user_dict["average_rating"] = user.average_rating
+    return UserResponse(**user_dict)
+
 class UserService:
     def __init__(self, db: AsyncIOMotorClient):
         self.db = db
