@@ -439,11 +439,7 @@ const Messages = () => {
                       </span>
                       {message.sender_id === user.id && (
                         <div className="ml-2">
-                          {message.is_read ? (
-                            <CheckCheckIcon className="h-3 w-3 text-blue-200" />
-                          ) : (
-                            <CheckIcon className="h-3 w-3 text-blue-200" />
-                          )}
+                          <CheckIcon className="h-3 w-3 text-blue-200" />
                         </div>
                       )}
                     </div>
