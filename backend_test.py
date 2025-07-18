@@ -1717,6 +1717,7 @@ class SkillSwapTester:
         print("  • Skill Management System")
         print("  • AI-Powered Matching Algorithm")
         print("  • Session Management System")
+        print("  • Real-time Messaging System")
         print("  • Search and Discovery")
         print("  • Analytics and Statistics")
         
