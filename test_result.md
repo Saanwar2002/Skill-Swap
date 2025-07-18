@@ -392,6 +392,10 @@ test_plan:
   current_focus:
     - "Profile Management"
     - "Skill Marketplace"
+    - "User Authentication System"
+    - "User Profile Management"
+    - "Skill Management System"
+    - "AI Matching Algorithm"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
