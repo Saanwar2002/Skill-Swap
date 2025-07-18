@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import Marketplace from "./pages/Marketplace";
 
 function App() {
   return (
@@ -39,6 +40,17 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Profile />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/marketplace"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Marketplace />
                   </Layout>
                 </ProtectedRoute>
               }
