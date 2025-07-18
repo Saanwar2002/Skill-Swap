@@ -19,7 +19,9 @@ class UserService:
             return None
         
         user = User(**user_data)
-        return UserResponse(**user.dict())
+        user_dict = user.dict()
+        user_dict["average_rating"] = user.average_rating
+        return UserResponse(**user_dict)
     
     async def update_user_profile(self, user_id: str, update_data: UserUpdate) -> Optional[UserResponse]:
         """Update user profile"""
