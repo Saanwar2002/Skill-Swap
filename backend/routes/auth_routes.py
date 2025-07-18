@@ -70,7 +70,7 @@ def create_auth_router(db: AsyncIOMotorClient) -> APIRouter:
                 expires_delta=access_token_expires
             )
             
-            user_response = UserResponse(**user.dict())
+            user_response = UserResponse(**user.dict(), average_rating=user.average_rating)
             
             return Token(
                 access_token=access_token,
