@@ -157,7 +157,9 @@ class AuthService:
             expires_delta=access_token_expires
         )
         
-        user_response = UserResponse(**user.dict())
+        user_dict = user.dict()
+        user_dict["average_rating"] = user.average_rating
+        user_response = UserResponse(**user_dict)
         
         return Token(
             access_token=access_token,
