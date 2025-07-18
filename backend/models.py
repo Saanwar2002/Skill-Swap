@@ -345,16 +345,17 @@ class UserSkillCreate(BaseModel):
 
 class SessionCreate(BaseModel):
     teacher_id: str
+    learner_id: str
     skill_id: str
     skill_name: str
     title: str
     description: Optional[str] = None
     scheduled_start: datetime
     scheduled_end: datetime
-    timezone: str
+    timezone: str = "UTC"
     session_type: str = "video"
     learning_objectives: List[str] = []
-    skill_coins_cost: int
+    skill_coins_paid: int = 0
 
 
 class MessageCreate(BaseModel):
