@@ -409,7 +409,7 @@ const Messages = () => {
                     <PhoneIcon className="h-5 w-5" />
                   </button>
                   <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
-                    <VideoIcon className="h-5 w-5" />
+                    <VideoCameraIcon className="h-5 w-5" />
                   </button>
                   <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full">
                     <EllipsisVerticalIcon className="h-5 w-5" />
