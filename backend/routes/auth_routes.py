@@ -47,7 +47,7 @@ def create_auth_router(db: AsyncIOMotorClient) -> APIRouter:
         try:
             token = credentials.credentials
             user = await auth_service.get_current_user(token)
-            return UserResponse(**user.dict())
+            return UserResponse(**user.dict(), average_rating=user.average_rating)
         except Exception as e:
             logger.error(f"Get current user error: {str(e)}")
             raise HTTPException(
