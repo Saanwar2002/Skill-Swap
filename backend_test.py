@@ -2003,6 +2003,20 @@ class SkillSwapTester:
         self.test_messaging_authentication_required()
         self.test_messaging_permission_controls()
         
+        # Gamification System Tests
+        print("\n🎮 Testing Gamification System...")
+        self.test_get_user_progress()
+        self.test_get_all_badges()
+        self.test_get_all_achievements()
+        self.test_get_leaderboard()
+        self.test_get_user_transactions()
+        self.test_check_user_progress()
+        self.test_get_other_user_progress()
+        self.test_award_skill_coins()
+        self.test_get_gamification_stats()
+        self.test_gamification_authentication_required()
+        self.test_gamification_badge_system_integration()
+        
         # Print summary
         self.print_summary()
     
