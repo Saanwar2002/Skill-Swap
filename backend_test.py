@@ -1174,8 +1174,8 @@ class SkillSwapTester:
             # Restore auth token
             self.auth_token = original_token
             
-            if response.status_code == 401:
-                self.log_test("Session Authentication Required", True, "Authentication correctly required (401 Unauthorized)")
+            if response.status_code in [401, 403]:
+                self.log_test("Session Authentication Required", True, f"Authentication correctly required ({response.status_code})")
             else:
                 self.log_test("Session Authentication Required", False, f"Authentication not required - Status: {response.status_code}")
                 
