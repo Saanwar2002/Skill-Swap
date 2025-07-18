@@ -1261,6 +1261,23 @@ class SkillSwapTester:
         self.test_session_permission_controls()
         self.test_session_authentication_required()
         
+        # Real-time Messaging tests (NEW FEATURES)
+        print("\n💬 Testing Real-time Messaging System...")
+        self.test_get_user_conversations()
+        self.test_create_conversation()
+        self.test_get_specific_conversation()
+        self.test_send_message()
+        self.test_get_conversation_messages()
+        self.test_mark_message_as_read()
+        self.test_mark_conversation_as_read()
+        self.test_get_unread_count()
+        self.test_delete_message()
+        self.test_edit_message()
+        self.test_search_messages()
+        self.test_get_online_users()
+        self.test_messaging_authentication_required()
+        self.test_messaging_permission_controls()
+        
         # Print summary
         self.print_summary()
     
