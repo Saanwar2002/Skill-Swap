@@ -30,7 +30,7 @@ def create_user_router(db: AsyncIOMotorClient) -> APIRouter:
     @router.get("/profile", response_model=UserResponse)
     async def get_my_profile(current_user: User = Depends(get_current_user)):
         """Get current user's profile"""
-        return UserResponse(**current_user.dict())
+        return UserResponse(**current_user.dict(), average_rating=current_user.average_rating)
     
     @router.get("/profile/{user_id}", response_model=UserResponse)
     async def get_user_profile(user_id: str):
