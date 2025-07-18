@@ -314,7 +314,7 @@ frontend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "User profile creation and editing interface - PENDING"
+        comment: "Building comprehensive profile management page with editing capabilities - IN PROGRESS"
 
   - task: "Skill Marketplace"
     implemented: false
