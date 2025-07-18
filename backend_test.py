@@ -667,22 +667,27 @@ class SkillSwapTester:
         self.test_get_current_user()
         self.test_token_refresh()
         
-        # User management tests
+        # User profile tests (NEW FEATURES)
+        self.test_get_user_profile()
         self.test_update_user_profile()
+        
+        # User management tests
         self.test_get_user_statistics()
-        self.test_search_users()
+        self.test_search_users_with_filters()
         self.test_get_leaderboard()
         
-        # Skill management tests
+        # Skill management tests (NEW FEATURES)
         self.test_get_all_skills()
         self.test_search_skills()
         self.test_get_popular_skills()
         self.test_get_skill_categories()
         self.test_add_user_skill()
         self.test_get_user_skills()
+        self.test_update_user_skill()
+        self.test_delete_user_skill()
         self.test_update_skill_preferences()
         
-        # AI Matching tests
+        # AI Matching tests (NEW FEATURES)
         self.test_find_matches()
         self.test_get_my_matches()
         self.test_get_match_suggestions()
