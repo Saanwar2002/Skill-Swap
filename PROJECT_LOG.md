@@ -93,7 +93,7 @@ A comprehensive Skill Swap Marketplace with AI-powered matching where users can 
 - [ ] **Skill Marketplace**
   - 📁 File: `frontend/src/pages/Marketplace.js` (to be created)
   - 🎯 Task: Browse skills, view matches, connect with users
-  - 📅 Status: ❌ Not Started
+  - 📅 Status: 🔄 In Progress (Started: 2025-01-XX)
   - 🧪 Testing: Pending implementation
 
 ### 🔶 **MEDIUM PRIORITY**
