@@ -177,7 +177,7 @@ class UserService:
                 }
         
         users_data = await self.users_collection.find(search_filter).limit(limit).to_list(None)
-        return [UserResponse(**User(**user).dict()) for user in users_data]
+        return [user_to_response(User(**user)) for user in users_data]
     
     async def get_user_by_skills(self, skills: List[str], exclude_user_id: str = None, limit: int = 20) -> List[UserResponse]:
         """Get users who offer specific skills"""
