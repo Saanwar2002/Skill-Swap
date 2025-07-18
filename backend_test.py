@@ -700,7 +700,7 @@ class SkillSwapTester:
                     "Learn different data types",
                     "Practice basic operations"
                 ],
-                "skill_coins_cost": 10
+                "skill_coins_paid": 10
             }
             
             response = self.make_request("POST", "/sessions/", session_data)
