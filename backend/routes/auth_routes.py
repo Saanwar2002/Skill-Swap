@@ -10,6 +10,14 @@ logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
+# Additional request models
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    reset_token: str
+    new_password: str
+
 def create_auth_router(db: AsyncIOMotorClient) -> APIRouter:
     router = APIRouter(prefix="/auth", tags=["Authentication"])
     auth_service = AuthService(db)
