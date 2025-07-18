@@ -1487,11 +1487,8 @@ class SkillSwapTester:
             message_id = message_to_edit.get("id")
             
             # Edit the message
-            edit_data = {
-                "new_content": "This message has been edited successfully! The content is now updated."
-            }
-            
-            response = self.make_request("PUT", f"/messages/messages/{message_id}/edit", edit_data)
+            response = self.make_request("PUT", f"/messages/messages/{message_id}/edit", 
+                                       params={"new_content": "This message has been edited successfully! The content is now updated."})
             
             if response.status_code == 200:
                 data = response.json()
