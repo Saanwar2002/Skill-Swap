@@ -389,7 +389,7 @@ class SkillSwapTester:
                 return
             
             skill_to_update = skills[0]
-            user_skill_id = skill_to_update["id"]  # This is the UserSkill ID, not the skill ID
+            skill_id = skill_to_update["skill_id"]  # Use the original skill_id, not the UserSkill id
             
             update_data = {
                 "level": "advanced",
@@ -398,7 +398,7 @@ class SkillSwapTester:
                 "self_assessment": "Expert level with extensive project experience"
             }
             
-            response = self.make_request("PUT", f"/users/skills/{user_skill_id}", update_data)
+            response = self.make_request("PUT", f"/users/skills/{skill_id}", update_data)
             
             if response.status_code == 200:
                 data = response.json()
@@ -446,10 +446,10 @@ class SkillSwapTester:
                 return
             
             added_skill = add_response.json()
-            user_skill_id = added_skill["id"]  # This is the UserSkill ID, not the skill ID
+            skill_id = added_skill["skill_id"]  # Use the original skill_id, not the UserSkill id
             
             # Now delete the skill
-            response = self.make_request("DELETE", f"/users/skills/{user_skill_id}")
+            response = self.make_request("DELETE", f"/users/skills/{skill_id}")
             
             if response.status_code == 200:
                 data = response.json()
