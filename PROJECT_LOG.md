@@ -75,7 +75,7 @@ A comprehensive Skill Swap Marketplace with AI-powered matching where users can 
 - [ ] **Session Management System**
   - 📁 File: `backend/sessions.py` (to be created)
   - 🎯 Task: Book, manage, and track skill-sharing sessions
-  - 📅 Status: ❌ Not Started
+  - 📅 Status: 🔄 In Progress (Started: 2025-01-XX)
   - 🧪 Testing: Pending implementation
 
 - [ ] **Real-time Messaging Backend**
