@@ -384,13 +384,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "User Authentication System"
-    - "User Profile Management"
     - "Authentication UI"
     - "User Dashboard"
-    - "AI Matching Algorithm"
-    - "Database Models"
-    - "API Routes and Endpoints"
+    - "Navigation and Layout"
+    - "Protected Routes"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
