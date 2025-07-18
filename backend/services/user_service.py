@@ -203,7 +203,7 @@ class UserService:
             search_filter["id"] = {"$ne": exclude_user_id}
         
         users_data = await self.users_collection.find(search_filter).limit(limit).to_list(None)
-        return [UserResponse(**User(**user).dict()) for user in users_data]
+        return [user_to_response(User(**user)) for user in users_data]
     
     async def update_user_preferences(self, user_id: str, skills_offered: List[str] = None, skills_wanted: List[str] = None) -> bool:
         """Update user skill preferences"""
