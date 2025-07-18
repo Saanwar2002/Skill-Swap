@@ -258,6 +258,90 @@ class AuthService:
                 "$set": {"updated_at": datetime.utcnow()}
             }
         )
+    
+    async def generate_reset_token(self, email: str) -> Optional[str]:
+        """Generate password reset token"""
+        try:
+            # Check if user exists
+            user = await self.get_user_by_email(email)
+            if not user:
+                return None
+            
+            # Generate reset token (valid for 1 hour)
+            reset_token_expires = timedelta(hours=1)
+            reset_token = self.create_access_token(
+                data={"sub": email, "user_id": user.id, "type": "reset"},
+                expires_delta=reset_token_expires
+            )
+            
+            # Store reset token in database (in production, consider using Redis or similar)
+            await self.users_collection.update_one(
+                {"id": user.id},
+                {
+                    "$set": {
+                        "reset_token": reset_token,
+                        "reset_token_expires": datetime.utcnow() + reset_token_expires,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            return reset_token
+            
+        except Exception as e:
+            logger.error(f"Error generating reset token: {str(e)}")
+            return None
+    
+    async def reset_password(self, reset_token: str, new_password: str) -> bool:
+        """Reset password using reset token"""
+        try:
+            # Validate reset token
+            payload = jwt.decode(reset_token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("sub")
+            user_id: str = payload.get("user_id")
+            token_type: str = payload.get("type")
+            
+            if not email or not user_id or token_type != "reset":
+                return False
+            
+            # Get user and verify reset token
+            user_data = await self.users_collection.find_one({"id": user_id})
+            if not user_data:
+                return False
+            
+            user = User(**user_data)
+            
+            # Check if token matches and is not expired
+            if (user_data.get("reset_token") != reset_token or 
+                not user_data.get("reset_token_expires") or
+                user_data.get("reset_token_expires") < datetime.utcnow()):
+                return False
+            
+            # Hash new password and update user
+            hashed_password = self.get_password_hash(new_password)
+            
+            await self.users_collection.update_one(
+                {"id": user_id},
+                {
+                    "$set": {
+                        "password_hash": hashed_password,
+                        "updated_at": datetime.utcnow()
+                    },
+                    "$unset": {
+                        "reset_token": "",
+                        "reset_token_expires": ""
+                    }
+                }
+            )
+            
+            return True
+            
+        except JWTError:
+            logger.error("Invalid reset token")
+            return False
+        except Exception as e:
+            logger.error(f"Error resetting password: {str(e)}")
+            return False
 
 
 # Dependency to get current user
