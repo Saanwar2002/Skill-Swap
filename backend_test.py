@@ -1609,6 +1609,325 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Messaging Permission Controls", False, f"Error: {str(e)}")
     
+    # ===== GAMIFICATION SYSTEM TESTS =====
+    
+    def test_get_user_progress(self):
+        """Test getting user progress (GET /api/gamification/progress)"""
+        if not self.auth_token:
+            self.log_test("Get User Progress", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/progress")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get User Progress", True, f"Retrieved user progress: {data.get('skill_coins', 0)} coins, {data.get('total_sessions', 0)} sessions", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get User Progress", False, f"Failed to get user progress: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Progress", False, f"Error: {str(e)}")
+    
+    def test_get_all_badges(self):
+        """Test getting all available badges (GET /api/gamification/badges)"""
+        if not self.auth_token:
+            self.log_test("Get All Badges", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/badges")
+            
+            if response.status_code == 200:
+                data = response.json()
+                badge_count = len(data)
+                badge_types = list(set([badge.get('badge_type') for badge in data]))
+                self.log_test("Get All Badges", True, f"Retrieved {badge_count} badges with types: {badge_types}", {"badge_count": badge_count, "sample_badges": data[:3] if data else []})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get All Badges", False, f"Failed to get badges: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get All Badges", False, f"Error: {str(e)}")
+    
+    def test_get_all_achievements(self):
+        """Test getting all available achievements (GET /api/gamification/achievements)"""
+        if not self.auth_token:
+            self.log_test("Get All Achievements", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/achievements")
+            
+            if response.status_code == 200:
+                data = response.json()
+                achievement_count = len(data)
+                achievement_types = list(set([achievement.get('achievement_type') for achievement in data]))
+                self.log_test("Get All Achievements", True, f"Retrieved {achievement_count} achievements with types: {achievement_types}", {"achievement_count": achievement_count, "sample_achievements": data[:3] if data else []})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get All Achievements", False, f"Failed to get achievements: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get All Achievements", False, f"Error: {str(e)}")
+    
+    def test_get_leaderboard(self):
+        """Test getting the leaderboard (GET /api/gamification/leaderboard)"""
+        if not self.auth_token:
+            self.log_test("Get Leaderboard", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/leaderboard", params={"limit": 10})
+            
+            if response.status_code == 200:
+                data = response.json()
+                leaderboard_count = len(data)
+                top_user = data[0] if data else None
+                self.log_test("Get Leaderboard", True, f"Retrieved leaderboard with {leaderboard_count} entries", {
+                    "leaderboard_count": leaderboard_count,
+                    "top_user": {
+                        "username": top_user.get("username"),
+                        "skill_coins": top_user.get("skill_coins"),
+                        "rank": top_user.get("rank")
+                    } if top_user else None
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Leaderboard", False, f"Failed to get leaderboard: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Leaderboard", False, f"Error: {str(e)}")
+    
+    def test_get_user_transactions(self):
+        """Test getting user's skill coin transactions (GET /api/gamification/transactions)"""
+        if not self.auth_token:
+            self.log_test("Get User Transactions", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/transactions", params={"limit": 20})
+            
+            if response.status_code == 200:
+                data = response.json()
+                transaction_count = len(data)
+                transaction_types = list(set([tx.get('transaction_type') for tx in data])) if data else []
+                self.log_test("Get User Transactions", True, f"Retrieved {transaction_count} transactions with types: {transaction_types}", {
+                    "transaction_count": transaction_count,
+                    "sample_transactions": data[:3] if data else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get User Transactions", False, f"Failed to get transactions: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Transactions", False, f"Error: {str(e)}")
+    
+    def test_check_user_progress(self):
+        """Test checking user progress and awarding badges (POST /api/gamification/check-progress)"""
+        if not self.auth_token:
+            self.log_test("Check User Progress", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("POST", "/gamification/check-progress")
+            
+            if response.status_code == 200:
+                data = response.json()
+                new_badges = data.get("new_badges", 0)
+                badges_awarded = data.get("badges", [])
+                self.log_test("Check User Progress", True, f"Progress checked: {new_badges} new badges awarded", {
+                    "new_badges": new_badges,
+                    "badges_awarded": [badge.get("name") for badge in badges_awarded]
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Check User Progress", False, f"Failed to check progress: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Check User Progress", False, f"Error: {str(e)}")
+    
+    def test_get_other_user_progress(self):
+        """Test getting another user's progress (GET /api/gamification/user/{user_id}/progress)"""
+        if not self.auth_token:
+            self.log_test("Get Other User Progress", False, "No auth token available")
+            return
+            
+        try:
+            # Create a second user to check their progress
+            timestamp = int(time.time())
+            other_user_data = {
+                "email": f"otheruser{timestamp}@skillswap.com",
+                "username": f"otheruser{timestamp}",
+                "password": "OtherUser123!",
+                "first_name": "Other",
+                "last_name": "User",
+                "role": "both"
+            }
+            
+            other_user_response = self.make_request("POST", "/auth/register", other_user_data)
+            if other_user_response.status_code != 200:
+                self.log_test("Get Other User Progress", False, "Could not create other user")
+                return
+            
+            other_user = other_user_response.json().get("user", {})
+            other_user_id = other_user["id"]
+            
+            response = self.make_request("GET", f"/gamification/user/{other_user_id}/progress")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Other User Progress", True, f"Retrieved other user progress: {data.get('skill_coins', 0)} coins, {data.get('total_sessions', 0)} sessions", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Other User Progress", False, f"Failed to get other user progress: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Other User Progress", False, f"Error: {str(e)}")
+    
+    def test_award_skill_coins(self):
+        """Test awarding skill coins to user (POST /api/gamification/award-coins)"""
+        if not self.auth_token:
+            self.log_test("Award Skill Coins", False, "No auth token available")
+            return
+            
+        try:
+            # Get current user info
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("Award Skill Coins", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            user_id = current_user["id"]
+            
+            # Award coins to self (allowed for testing)
+            response = self.make_request("POST", "/gamification/award-coins", params={
+                "user_id": user_id,
+                "amount": 50,
+                "reason": "Testing skill coin award system"
+            })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Award Skill Coins", True, f"Successfully awarded coins: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Award Skill Coins", False, f"Failed to award coins: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Award Skill Coins", False, f"Error: {str(e)}")
+    
+    def test_get_gamification_stats(self):
+        """Test getting gamification system statistics (GET /api/gamification/stats/summary)"""
+        if not self.auth_token:
+            self.log_test("Get Gamification Stats", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/gamification/stats/summary")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Gamification Stats", True, f"Retrieved gamification stats: {data.get('total_badges', 0)} badges, {data.get('total_achievements', 0)} achievements, {data.get('total_users', 0)} users", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Gamification Stats", False, f"Failed to get stats: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Gamification Stats", False, f"Error: {str(e)}")
+    
+    def test_gamification_authentication_required(self):
+        """Test that gamification endpoints require authentication"""
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Try to access gamification endpoints without authentication
+            response = self.make_request("GET", "/gamification/progress")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if response.status_code in [401, 403]:
+                self.log_test("Gamification Authentication Required", True, f"Authentication correctly required ({response.status_code})")
+            else:
+                self.log_test("Gamification Authentication Required", False, f"Authentication not required - Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Gamification Authentication Required", False, f"Error: {str(e)}")
+    
+    def test_gamification_badge_system_integration(self):
+        """Test the complete badge system workflow"""
+        if not self.auth_token:
+            self.log_test("Badge System Integration", False, "No auth token available")
+            return
+            
+        try:
+            # Step 1: Get initial progress
+            initial_progress = self.make_request("GET", "/gamification/progress")
+            if initial_progress.status_code != 200:
+                self.log_test("Badge System Integration", False, "Could not get initial progress")
+                return
+            
+            initial_data = initial_progress.json()
+            initial_badges = len(initial_data.get("badges", []))
+            initial_coins = initial_data.get("skill_coins", 0)
+            
+            # Step 2: Add a skill to potentially trigger badge
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code == 200:
+                skills = skills_response.json()
+                if skills:
+                    # Add a skill
+                    test_skill = skills[0]
+                    skill_data = {
+                        "skill_id": test_skill["id"],
+                        "skill_name": test_skill["name"],
+                        "level": "beginner",
+                        "years_experience": 1,
+                        "certifications": [],
+                        "self_assessment": "Testing badge system"
+                    }
+                    
+                    add_skill_response = self.make_request("POST", "/users/skills", skill_data)
+                    if add_skill_response.status_code == 200:
+                        # Step 3: Check progress to trigger badge evaluation
+                        check_response = self.make_request("POST", "/gamification/check-progress")
+                        if check_response.status_code == 200:
+                            check_data = check_response.json()
+                            new_badges = check_data.get("new_badges", 0)
+                            
+                            # Step 4: Get updated progress
+                            final_progress = self.make_request("GET", "/gamification/progress")
+                            if final_progress.status_code == 200:
+                                final_data = final_progress.json()
+                                final_badges = len(final_data.get("badges", []))
+                                final_coins = final_data.get("skill_coins", 0)
+                                
+                                self.log_test("Badge System Integration", True, f"Badge system workflow complete: {initial_badges} → {final_badges} badges, {initial_coins} → {final_coins} coins, {new_badges} new badges awarded", {
+                                    "initial_badges": initial_badges,
+                                    "final_badges": final_badges,
+                                    "initial_coins": initial_coins,
+                                    "final_coins": final_coins,
+                                    "new_badges_awarded": new_badges
+                                })
+                            else:
+                                self.log_test("Badge System Integration", False, "Could not get final progress")
+                        else:
+                            self.log_test("Badge System Integration", False, "Could not check progress")
+                    else:
+                        self.log_test("Badge System Integration", False, "Could not add skill")
+                else:
+                    self.log_test("Badge System Integration", False, "No skills available")
+            else:
+                self.log_test("Badge System Integration", False, "Could not get skills")
+                
+        except Exception as e:
+            self.log_test("Badge System Integration", False, f"Error: {str(e)}")
+    
     
     def run_all_tests(self):
         """Run all backend tests"""
