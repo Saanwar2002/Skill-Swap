@@ -100,4 +100,47 @@ def create_auth_router(db: AsyncIOMotorClient) -> APIRouter:
         # In a real implementation, you might want to blacklist the token
         return {"message": "Successfully logged out"}
     
+    @router.post("/forgot-password")
+    async def forgot_password(request: ForgotPasswordRequest):
+        """Request password reset"""
+        try:
+            # Generate reset token and send email
+            reset_token = await auth_service.generate_reset_token(request.email)
+            
+            if reset_token:
+                # In a real implementation, you would send an email here
+                # For now, we'll return the token (in production, this should not be done)
+                return {
+                    "message": "Password reset email sent successfully",
+                    "reset_token": reset_token  # Remove this in production
+                }
+            else:
+                # Still return success to prevent email enumeration
+                return {"message": "If the email exists, a reset link has been sent"}
+                
+        except Exception as e:
+            logger.error(f"Forgot password error: {str(e)}")
+            return {"message": "If the email exists, a reset link has been sent"}
+    
+    @router.post("/reset-password")
+    async def reset_password(request: ResetPasswordRequest):
+        """Reset password using reset token"""
+        try:
+            success = await auth_service.reset_password(request.reset_token, request.new_password)
+            
+            if success:
+                return {"message": "Password reset successfully"}
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or expired reset token"
+                )
+                
+        except Exception as e:
+            logger.error(f"Reset password error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token"
+            )
+    
     return router
