@@ -342,7 +342,8 @@ class MatchingService:
             other_user_data = await self.users_collection.find_one({"id": other_user_id})
             
             if other_user_data:
-                other_user = UserResponse(**User(**other_user_data).dict())
+                other_user_obj = User(**other_user_data)
+                other_user = UserResponse(**other_user_obj.dict(), average_rating=other_user_obj.average_rating)
                 result.append({
                     "match": match,
                     "user": other_user,
