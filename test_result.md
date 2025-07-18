@@ -438,7 +438,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Gamification System"
     - "Real-time Chat UI"
   stuck_tasks: []
   test_all: false
