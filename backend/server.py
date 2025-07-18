@@ -17,6 +17,7 @@ from routes.skill_routes import create_skill_router
 from routes.matching_routes import create_matching_router
 from routes.session_routes import create_session_router
 from routes.message_routes import create_message_router
+from routes.gamification_routes import create_gamification_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
