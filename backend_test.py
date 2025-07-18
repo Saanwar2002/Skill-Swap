@@ -370,21 +370,153 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Update Skill Preferences", False, f"Error: {str(e)}")
     
-    def test_search_users(self):
-        """Test user search functionality"""
+    def test_update_user_skill(self):
+        """Test updating user skill (PUT /api/users/skills/{skill_id})"""
+        if not self.auth_token:
+            self.log_test("Update User Skill", False, "No auth token available")
+            return
+            
         try:
-            # Search for users with Python skills
-            response = self.make_request("GET", "/users/search", params={"query": "Python"})
+            # First get user's skills to find one to update
+            skills_response = self.make_request("GET", "/users/skills")
+            if skills_response.status_code != 200:
+                self.log_test("Update User Skill", False, "Could not retrieve user skills")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Update User Skill", False, "No skills available to update")
+                return
+            
+            skill_to_update = skills[0]
+            skill_id = skill_to_update["id"]
+            
+            update_data = {
+                "level": "advanced",
+                "years_experience": 5,
+                "certifications": ["Advanced Python Certification", "Django Expert"],
+                "self_assessment": "Expert level with extensive project experience"
+            }
+            
+            response = self.make_request("PUT", f"/users/skills/{skill_id}", update_data)
             
             if response.status_code == 200:
                 data = response.json()
-                self.log_test("Search Users", True, f"Found {len(data)} users matching 'Python'", {"user_count": len(data)})
+                self.log_test("Update User Skill", True, f"Updated skill: {data.get('skill_name')}", data)
             else:
                 error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
-                self.log_test("Search Users", False, f"User search failed: {error_detail}")
+                self.log_test("Update User Skill", False, f"Failed to update skill: {error_detail}")
                 
         except Exception as e:
-            self.log_test("Search Users", False, f"Error: {str(e)}")
+            self.log_test("Update User Skill", False, f"Error: {str(e)}")
+
+    def test_delete_user_skill(self):
+        """Test deleting user skill (DELETE /api/users/skills/{skill_id})"""
+        if not self.auth_token:
+            self.log_test("Delete User Skill", False, "No auth token available")
+            return
+            
+        try:
+            # First add a skill to delete
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("Delete User Skill", False, "Could not retrieve skills list")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Delete User Skill", False, "No skills available")
+                return
+            
+            # Add a skill first
+            test_skill = next((skill for skill in skills if "JavaScript" in skill.get("name", "")), skills[0])
+            
+            skill_data = {
+                "skill_id": test_skill["id"],
+                "skill_name": test_skill["name"],
+                "level": "beginner",
+                "years_experience": 1,
+                "certifications": [],
+                "self_assessment": "Learning the basics"
+            }
+            
+            add_response = self.make_request("POST", "/users/skills", skill_data)
+            if add_response.status_code != 200:
+                self.log_test("Delete User Skill", False, "Could not add skill to delete")
+                return
+            
+            added_skill = add_response.json()
+            skill_id = added_skill["id"]
+            
+            # Now delete the skill
+            response = self.make_request("DELETE", f"/users/skills/{skill_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Delete User Skill", True, f"Deleted skill successfully: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Delete User Skill", False, f"Failed to delete skill: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Delete User Skill", False, f"Error: {str(e)}")
+
+    def test_search_users_with_filters(self):
+        """Test user search with various filters (GET /api/users/search)"""
+        try:
+            # Test 1: Search with skills_offered filter
+            response1 = self.make_request("GET", "/users/search", params={
+                "skills_offered": ["Python", "JavaScript"]
+            })
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Search Users - Skills Offered Filter", True, f"Found {len(data1)} users with Python/JavaScript skills", {"user_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Search Users - Skills Offered Filter", False, f"Search failed: {error_detail}")
+            
+            # Test 2: Search with location filter
+            response2 = self.make_request("GET", "/users/search", params={
+                "location": "San Francisco"
+            })
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Search Users - Location Filter", True, f"Found {len(data2)} users in San Francisco", {"user_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Search Users - Location Filter", False, f"Search failed: {error_detail}")
+            
+            # Test 3: Search with min_rating filter
+            response3 = self.make_request("GET", "/users/search", params={
+                "min_rating": 4.0
+            })
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Search Users - Min Rating Filter", True, f"Found {len(data3)} users with rating >= 4.0", {"user_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Search Users - Min Rating Filter", False, f"Search failed: {error_detail}")
+            
+            # Test 4: Combined filters
+            response4 = self.make_request("GET", "/users/search", params={
+                "query": "developer",
+                "skills_offered": ["Python"],
+                "location": "CA",
+                "limit": 10
+            })
+            
+            if response4.status_code == 200:
+                data4 = response4.json()
+                self.log_test("Search Users - Combined Filters", True, f"Found {len(data4)} users with combined filters", {"user_count": len(data4)})
+            else:
+                error_detail = response4.json().get("detail", "Unknown error") if response4.content else f"Status: {response4.status_code}"
+                self.log_test("Search Users - Combined Filters", False, f"Search failed: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Search Users with Filters", False, f"Error: {str(e)}")
     
     def test_get_user_statistics(self):
         """Test getting user statistics"""
