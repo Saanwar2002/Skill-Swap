@@ -170,8 +170,27 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Get Current User", False, f"Error: {str(e)}")
     
+    def test_get_user_profile(self):
+        """Test getting user profile (GET /api/users/profile)"""
+        if not self.auth_token:
+            self.log_test("Get User Profile", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/users/profile")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get User Profile", True, f"Retrieved profile for: {data.get('username')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get User Profile", False, f"Failed to get profile: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Profile", False, f"Error: {str(e)}")
+
     def test_update_user_profile(self):
-        """Test updating user profile"""
+        """Test updating user profile with new fields (PUT /api/users/profile)"""
         if not self.auth_token:
             self.log_test("Update User Profile", False, "No auth token available")
             return
@@ -180,16 +199,23 @@ class SkillSwapTester:
             update_data = {
                 "bio": "Updated bio: Full-stack developer with expertise in Python, React, and AI",
                 "location": "Seattle, WA",
+                "timezone": "America/Los_Angeles",
                 "teaching_style": "Interactive and hands-on approach",
                 "learning_style": "Visual learner who prefers practical examples",
-                "languages": ["English", "Spanish", "French"]
+                "languages": ["English", "Spanish", "French"],
+                "availability": {
+                    "monday": ["09:00", "17:00"],
+                    "tuesday": ["09:00", "17:00"],
+                    "wednesday": ["09:00", "17:00"]
+                },
+                "profile_image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
             }
             
             response = self.make_request("PUT", "/users/profile", update_data)
             
             if response.status_code == 200:
                 data = response.json()
-                self.log_test("Update User Profile", True, f"Profile updated successfully", data)
+                self.log_test("Update User Profile", True, f"Profile updated successfully with new fields", data)
             else:
                 error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
                 self.log_test("Update User Profile", False, f"Profile update failed: {error_detail}")
