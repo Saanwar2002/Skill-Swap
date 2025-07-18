@@ -15,6 +15,7 @@ from routes.auth_routes import create_auth_router
 from routes.user_routes import create_user_router
 from routes.skill_routes import create_skill_router
 from routes.matching_routes import create_matching_router
+from routes.session_routes import create_session_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
