@@ -284,3 +284,52 @@ class UserService:
             })
         
         return leaderboard
+    
+    async def update_user_sessions(self, user_id: str, session_type: str) -> bool:
+        """Update user session counts"""
+        try:
+            if session_type == "taught":
+                result = await self.users_collection.update_one(
+                    {"id": user_id},
+                    {"$inc": {"sessions_taught": 1}}
+                )
+            elif session_type == "learned":
+                result = await self.users_collection.update_one(
+                    {"id": user_id},
+                    {"$inc": {"sessions_learned": 1}}
+                )
+            else:
+                return False
+            
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating user sessions: {str(e)}")
+            return False
+    
+    async def update_user_rating(self, user_id: str, rating: float) -> bool:
+        """Update user rating"""
+        try:
+            # Get current user data
+            user_data = await self.users_collection.find_one({"id": user_id})
+            if not user_data:
+                return False
+            
+            user = User(**user_data)
+            new_total_rating = user.total_rating + rating
+            new_rating_count = user.rating_count + 1
+            
+            result = await self.users_collection.update_one(
+                {"id": user_id},
+                {
+                    "$set": {
+                        "total_rating": new_total_rating,
+                        "rating_count": new_rating_count,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating user rating: {str(e)}")
+            return False
