@@ -384,10 +384,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Authentication UI"
-    - "User Dashboard"
-    - "Navigation and Layout"
-    - "Protected Routes"
+    - "Profile Management"
+    - "Skill Marketplace"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
