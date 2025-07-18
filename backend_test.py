@@ -631,6 +631,548 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Get Matching Analytics", False, f"Error: {str(e)}")
     
+    # ===== SESSION MANAGEMENT TESTS =====
+    
+    def test_create_session(self):
+        """Test creating a new session"""
+        if not self.auth_token:
+            self.log_test("Create Session", False, "No auth token available")
+            return
+            
+        try:
+            # First get available skills to use in session
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("Create Session", False, "Could not retrieve skills list")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Create Session", False, "No skills available")
+                return
+            
+            # Get current user info
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("Create Session", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            
+            # Create a second user to be the learner
+            timestamp = int(time.time())
+            learner_data = {
+                "email": f"learner{timestamp}@skillswap.com",
+                "username": f"learner{timestamp}",
+                "password": "LearnerPass123!",
+                "first_name": "Emma",
+                "last_name": "Wilson",
+                "role": "learner"
+            }
+            
+            learner_response = self.make_request("POST", "/auth/register", learner_data)
+            if learner_response.status_code != 200:
+                self.log_test("Create Session", False, "Could not create learner user")
+                return
+            
+            learner_user = learner_response.json().get("user", {})
+            
+            # Create session data
+            from datetime import datetime, timedelta
+            start_time = datetime.utcnow() + timedelta(days=1)  # Tomorrow
+            end_time = start_time + timedelta(hours=1)  # 1 hour session
+            
+            python_skill = next((skill for skill in skills if "Python" in skill.get("name", "")), skills[0])
+            
+            session_data = {
+                "teacher_id": current_user["id"],
+                "learner_id": learner_user["id"],
+                "skill_id": python_skill["id"],
+                "skill_name": python_skill["name"],
+                "title": "Python Fundamentals - Variables and Data Types",
+                "description": "Learn the basics of Python programming including variables, data types, and basic operations",
+                "scheduled_start": start_time.isoformat(),
+                "scheduled_end": end_time.isoformat(),
+                "timezone": "UTC",
+                "session_type": "video",
+                "learning_objectives": [
+                    "Understand Python variables",
+                    "Learn different data types",
+                    "Practice basic operations"
+                ],
+                "skill_coins_paid": 10
+            }
+            
+            response = self.make_request("POST", "/sessions/", session_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_session_id = data.get("id")  # Store for other tests
+                self.learner_token = learner_response.json().get("access_token")  # Store learner token
+                self.log_test("Create Session", True, f"Session created: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Session", False, f"Failed to create session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Session", False, f"Error: {str(e)}")
+    
+    def test_get_my_sessions(self):
+        """Test getting user's sessions with filters"""
+        if not self.auth_token:
+            self.log_test("Get My Sessions", False, "No auth token available")
+            return
+            
+        try:
+            # Test 1: Get all sessions
+            response1 = self.make_request("GET", "/sessions/")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Get My Sessions - All", True, f"Retrieved {len(data1)} sessions", {"session_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Get My Sessions - All", False, f"Failed to get sessions: {error_detail}")
+            
+            # Test 2: Get sessions as teacher
+            response2 = self.make_request("GET", "/sessions/", params={"role": "teacher"})
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Get My Sessions - Teacher Role", True, f"Retrieved {len(data2)} teacher sessions", {"session_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Get My Sessions - Teacher Role", False, f"Failed to get teacher sessions: {error_detail}")
+            
+            # Test 3: Get sessions by status
+            response3 = self.make_request("GET", "/sessions/", params={"status": "scheduled"})
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Get My Sessions - Scheduled Status", True, f"Retrieved {len(data3)} scheduled sessions", {"session_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Get My Sessions - Scheduled Status", False, f"Failed to get scheduled sessions: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get My Sessions", False, f"Error: {str(e)}")
+    
+    def test_get_upcoming_sessions(self):
+        """Test getting upcoming sessions"""
+        if not self.auth_token:
+            self.log_test("Get Upcoming Sessions", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/sessions/upcoming")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Upcoming Sessions", True, f"Retrieved {len(data)} upcoming sessions", {"session_count": len(data)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Upcoming Sessions", False, f"Failed to get upcoming sessions: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Upcoming Sessions", False, f"Error: {str(e)}")
+    
+    def test_get_specific_session(self):
+        """Test getting a specific session by ID"""
+        if not self.auth_token:
+            self.log_test("Get Specific Session", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Get Specific Session", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/sessions/{self.created_session_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Specific Session", True, f"Retrieved session: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Specific Session", False, f"Failed to get session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Specific Session", False, f"Error: {str(e)}")
+    
+    def test_update_session(self):
+        """Test updating a session"""
+        if not self.auth_token:
+            self.log_test("Update Session", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Update Session", False, "No session ID available from previous test")
+            return
+            
+        try:
+            update_data = {
+                "title": "Python Fundamentals - Updated Session",
+                "description": "Updated description: Learn Python basics with hands-on examples",
+                "notes": "Updated session with additional practice exercises",
+                "learning_objectives": [
+                    "Understand Python variables and naming conventions",
+                    "Learn different data types (int, float, string, boolean)",
+                    "Practice basic operations and expressions",
+                    "Write simple Python programs"
+                ]
+            }
+            
+            response = self.make_request("PUT", f"/sessions/{self.created_session_id}", update_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Update Session", True, f"Session updated: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Update Session", False, f"Failed to update session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Update Session", False, f"Error: {str(e)}")
+    
+    def test_start_session(self):
+        """Test starting a session"""
+        if not self.auth_token:
+            self.log_test("Start Session", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Start Session", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("POST", f"/sessions/{self.created_session_id}/start")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Start Session", True, f"Session started: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Start Session", False, f"Failed to start session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Start Session", False, f"Error: {str(e)}")
+    
+    def test_end_session(self):
+        """Test ending a session"""
+        if not self.auth_token:
+            self.log_test("End Session", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("End Session", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("POST", f"/sessions/{self.created_session_id}/end")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("End Session", True, f"Session ended: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("End Session", False, f"Failed to end session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("End Session", False, f"Error: {str(e)}")
+    
+    def test_submit_session_feedback(self):
+        """Test submitting session feedback and rating"""
+        if not self.auth_token:
+            self.log_test("Submit Session Feedback", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Submit Session Feedback", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # Submit feedback as teacher
+            response = self.make_request("POST", f"/sessions/{self.created_session_id}/feedback", 
+                                       params={
+                                           "rating": 4.5,
+                                           "feedback": "Great session! The learner was engaged and asked excellent questions. Made good progress on Python fundamentals."
+                                       })
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Submit Session Feedback", True, f"Feedback submitted: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Submit Session Feedback", False, f"Failed to submit feedback: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Submit Session Feedback", False, f"Error: {str(e)}")
+    
+    def test_cancel_session(self):
+        """Test cancelling a session"""
+        if not self.auth_token:
+            self.log_test("Cancel Session", False, "No auth token available")
+            return
+            
+        try:
+            # Create a new session to cancel (so we don't interfere with other tests)
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("Cancel Session", False, "Could not retrieve skills list")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Cancel Session", False, "No skills available")
+                return
+            
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("Cancel Session", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            
+            # Create a learner for this test
+            timestamp = int(time.time())
+            learner_data = {
+                "email": f"cancellearner{timestamp}@skillswap.com",
+                "username": f"cancellearner{timestamp}",
+                "password": "CancelPass123!",
+                "first_name": "John",
+                "last_name": "Doe",
+                "role": "learner"
+            }
+            
+            learner_response = self.make_request("POST", "/auth/register", learner_data)
+            if learner_response.status_code != 200:
+                self.log_test("Cancel Session", False, "Could not create learner user")
+                return
+            
+            learner_user = learner_response.json().get("user", {})
+            
+            # Create session to cancel
+            from datetime import datetime, timedelta
+            start_time = datetime.utcnow() + timedelta(days=2)  # Day after tomorrow
+            end_time = start_time + timedelta(hours=1)
+            
+            javascript_skill = next((skill for skill in skills if "JavaScript" in skill.get("name", "")), skills[0])
+            
+            session_data = {
+                "teacher_id": current_user["id"],
+                "learner_id": learner_user["id"],
+                "skill_id": javascript_skill["id"],
+                "skill_name": javascript_skill["name"],
+                "title": "JavaScript Basics - To Be Cancelled",
+                "description": "This session will be cancelled for testing purposes",
+                "scheduled_start": start_time.isoformat(),
+                "scheduled_end": end_time.isoformat(),
+                "timezone": "UTC",
+                "session_type": "video",
+                "skill_coins_paid": 15
+            }
+            
+            create_response = self.make_request("POST", "/sessions/", session_data)
+            if create_response.status_code != 200:
+                self.log_test("Cancel Session", False, "Could not create session to cancel")
+                return
+            
+            created_session = create_response.json()
+            session_id = created_session["id"]
+            
+            # Now cancel the session
+            response = self.make_request("POST", f"/sessions/{session_id}/cancel", 
+                                       params={"reason": "Schedule conflict - need to reschedule"})
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Cancel Session", True, f"Session cancelled: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Cancel Session", False, f"Failed to cancel session: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Cancel Session", False, f"Error: {str(e)}")
+    
+    def test_get_session_statistics(self):
+        """Test getting session statistics for a user"""
+        if not self.auth_token:
+            self.log_test("Get Session Statistics", False, "No auth token available")
+            return
+            
+        try:
+            # Get current user info
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("Get Session Statistics", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            user_id = current_user["id"]
+            
+            response = self.make_request("GET", f"/sessions/user/{user_id}/statistics")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Session Statistics", True, f"Retrieved session statistics", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Session Statistics", False, f"Failed to get statistics: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Session Statistics", False, f"Error: {str(e)}")
+    
+    def test_get_user_availability(self):
+        """Test getting user availability"""
+        if not self.auth_token:
+            self.log_test("Get User Availability", False, "No auth token available")
+            return
+            
+        try:
+            # Get current user info
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("Get User Availability", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            user_id = current_user["id"]
+            
+            # Check availability for tomorrow
+            from datetime import datetime, timedelta
+            tomorrow = datetime.utcnow() + timedelta(days=1)
+            
+            response = self.make_request("GET", f"/sessions/user/{user_id}/availability", 
+                                       params={"date": tomorrow.isoformat()})
+            
+            if response.status_code == 200:
+                data = response.json()
+                available_slots = data.get("available_slots", [])
+                self.log_test("Get User Availability", True, f"Retrieved {len(available_slots)} available time slots", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get User Availability", False, f"Failed to get availability: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Availability", False, f"Error: {str(e)}")
+    
+    def test_search_sessions(self):
+        """Test session search functionality"""
+        if not self.auth_token:
+            self.log_test("Search Sessions", False, "No auth token available")
+            return
+            
+        try:
+            # Test 1: Search by query
+            response1 = self.make_request("GET", "/sessions/search", params={"query": "Python"})
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Search Sessions - Query", True, f"Found {len(data1)} sessions matching 'Python'", {"session_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Search Sessions - Query", False, f"Search failed: {error_detail}")
+            
+            # Test 2: Search by status
+            response2 = self.make_request("GET", "/sessions/search", params={"status": "completed"})
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Search Sessions - Status Filter", True, f"Found {len(data2)} completed sessions", {"session_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Search Sessions - Status Filter", False, f"Search failed: {error_detail}")
+            
+            # Test 3: Search with date range
+            from datetime import datetime, timedelta
+            date_from = datetime.utcnow() - timedelta(days=7)
+            date_to = datetime.utcnow() + timedelta(days=7)
+            
+            response3 = self.make_request("GET", "/sessions/search", params={
+                "date_from": date_from.isoformat(),
+                "date_to": date_to.isoformat(),
+                "limit": 10
+            })
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Search Sessions - Date Range", True, f"Found {len(data3)} sessions in date range", {"session_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Search Sessions - Date Range", False, f"Search failed: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Search Sessions", False, f"Error: {str(e)}")
+    
+    def test_session_permission_controls(self):
+        """Test that users can only access sessions they participate in"""
+        if not self.auth_token:
+            self.log_test("Session Permission Controls", False, "No auth token available")
+            return
+            
+        try:
+            # Create a third user who shouldn't have access to our sessions
+            timestamp = int(time.time())
+            unauthorized_user_data = {
+                "email": f"unauthorized{timestamp}@skillswap.com",
+                "username": f"unauthorized{timestamp}",
+                "password": "UnauthorizedPass123!",
+                "first_name": "Unauthorized",
+                "last_name": "User",
+                "role": "both"
+            }
+            
+            unauthorized_response = self.make_request("POST", "/auth/register", unauthorized_user_data)
+            if unauthorized_response.status_code != 200:
+                self.log_test("Session Permission Controls", False, "Could not create unauthorized user")
+                return
+            
+            unauthorized_token = unauthorized_response.json().get("access_token")
+            
+            # Try to access our created session with unauthorized token
+            if hasattr(self, 'created_session_id') and self.created_session_id:
+                # Temporarily switch to unauthorized token
+                original_token = self.auth_token
+                self.auth_token = unauthorized_token
+                
+                response = self.make_request("GET", f"/sessions/{self.created_session_id}")
+                
+                # Restore original token
+                self.auth_token = original_token
+                
+                if response.status_code == 403:
+                    self.log_test("Session Permission Controls", True, "Unauthorized access correctly blocked (403 Forbidden)")
+                elif response.status_code == 404:
+                    self.log_test("Session Permission Controls", True, "Unauthorized access correctly blocked (404 Not Found)")
+                else:
+                    self.log_test("Session Permission Controls", False, f"Unauthorized access not blocked - Status: {response.status_code}")
+            else:
+                self.log_test("Session Permission Controls", False, "No session available to test permissions")
+                
+        except Exception as e:
+            self.log_test("Session Permission Controls", False, f"Error: {str(e)}")
+    
+    def test_session_authentication_required(self):
+        """Test that session endpoints require authentication"""
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Try to access sessions without authentication
+            response = self.make_request("GET", "/sessions/")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if response.status_code == 401:
+                self.log_test("Session Authentication Required", True, "Authentication correctly required (401 Unauthorized)")
+            else:
+                self.log_test("Session Authentication Required", False, f"Authentication not required - Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Session Authentication Required", False, f"Error: {str(e)}")
+    
     def test_token_refresh(self):
         """Test JWT token refresh"""
         if not self.auth_token:
