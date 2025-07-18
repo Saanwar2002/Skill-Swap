@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Marketplace from "./pages/Marketplace";
 import Sessions from "./pages/Sessions";
+import Messages from "./pages/Messages";
 
 function App() {
   return (
