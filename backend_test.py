@@ -1204,6 +1204,415 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Token Refresh", False, f"Error: {str(e)}")
     
+    # ===== MESSAGING SYSTEM TESTS =====
+    
+    def test_get_user_conversations(self):
+        """Test getting user conversations (GET /api/messages/conversations)"""
+        if not self.auth_token:
+            self.log_test("Get User Conversations", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/messages/conversations")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get User Conversations", True, f"Retrieved {len(data)} conversations", {"conversation_count": len(data)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get User Conversations", False, f"Failed to get conversations: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Conversations", False, f"Error: {str(e)}")
+    
+    def test_create_conversation(self):
+        """Test creating a new conversation (POST /api/messages/conversations)"""
+        if not self.auth_token:
+            self.log_test("Create Conversation", False, "No auth token available")
+            return
+            
+        try:
+            # Create a second user to have a conversation with
+            timestamp = int(time.time())
+            participant_data = {
+                "email": f"chatuser{timestamp}@skillswap.com",
+                "username": f"chatuser{timestamp}",
+                "password": "ChatUser123!",
+                "first_name": "Chat",
+                "last_name": "User",
+                "role": "both"
+            }
+            
+            participant_response = self.make_request("POST", "/auth/register", participant_data)
+            if participant_response.status_code != 200:
+                self.log_test("Create Conversation", False, "Could not create participant user")
+                return
+            
+            participant_user = participant_response.json().get("user", {})
+            self.chat_participant_id = participant_user["id"]  # Store for other tests
+            self.chat_participant_token = participant_response.json().get("access_token")
+            
+            # Create conversation
+            conversation_data = [self.test_user_id, self.chat_participant_id]
+            
+            response = self.make_request("POST", "/messages/conversations", conversation_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.test_conversation_id = data.get("id")  # Store for other tests
+                self.log_test("Create Conversation", True, f"Conversation created: {data.get('id')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Conversation", False, f"Failed to create conversation: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Conversation", False, f"Error: {str(e)}")
+    
+    def test_get_specific_conversation(self):
+        """Test getting a specific conversation (GET /api/messages/conversations/{id})"""
+        if not self.auth_token:
+            self.log_test("Get Specific Conversation", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'test_conversation_id') or not self.test_conversation_id:
+            self.log_test("Get Specific Conversation", False, "No conversation ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/messages/conversations/{self.test_conversation_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Specific Conversation", True, f"Retrieved conversation: {data.get('id')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Specific Conversation", False, f"Failed to get conversation: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Specific Conversation", False, f"Error: {str(e)}")
+    
+    def test_send_message(self):
+        """Test sending a message (POST /api/messages/send)"""
+        if not self.auth_token:
+            self.log_test("Send Message", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'chat_participant_id') or not self.chat_participant_id:
+            self.log_test("Send Message", False, "No chat participant available from previous test")
+            return
+            
+        try:
+            message_data = {
+                "recipient_id": self.chat_participant_id,
+                "content": "Hello! This is a test message from the messaging system. How are you doing?",
+                "message_type": "text"
+            }
+            
+            response = self.make_request("POST", "/messages/send", message_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.test_message_id = data.get("id")  # Store for other tests
+                self.log_test("Send Message", True, f"Message sent: {data.get('content')[:50]}...", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Send Message", False, f"Failed to send message: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Send Message", False, f"Error: {str(e)}")
+    
+    def test_get_conversation_messages(self):
+        """Test getting conversation messages (GET /api/messages/conversations/{id}/messages)"""
+        if not self.auth_token:
+            self.log_test("Get Conversation Messages", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'test_conversation_id') or not self.test_conversation_id:
+            self.log_test("Get Conversation Messages", False, "No conversation ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/messages/conversations/{self.test_conversation_id}/messages", 
+                                       params={"limit": 20, "offset": 0})
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Conversation Messages", True, f"Retrieved {len(data)} messages", {"message_count": len(data)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Conversation Messages", False, f"Failed to get messages: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Conversation Messages", False, f"Error: {str(e)}")
+    
+    def test_mark_message_as_read(self):
+        """Test marking a message as read (PUT /api/messages/messages/{id}/read)"""
+        if not self.auth_token:
+            self.log_test("Mark Message as Read", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'test_message_id') or not self.test_message_id:
+            self.log_test("Mark Message as Read", False, "No message ID available from previous test")
+            return
+            
+        try:
+            # Switch to the recipient's token to mark the message as read
+            if hasattr(self, 'chat_participant_token'):
+                original_token = self.auth_token
+                self.auth_token = self.chat_participant_token
+                
+                response = self.make_request("PUT", f"/messages/messages/{self.test_message_id}/read")
+                
+                # Restore original token
+                self.auth_token = original_token
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_test("Mark Message as Read", True, f"Message marked as read: {data.get('message')}", data)
+                else:
+                    error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                    self.log_test("Mark Message as Read", False, f"Failed to mark message as read: {error_detail}")
+            else:
+                self.log_test("Mark Message as Read", False, "No participant token available")
+                
+        except Exception as e:
+            self.log_test("Mark Message as Read", False, f"Error: {str(e)}")
+    
+    def test_mark_conversation_as_read(self):
+        """Test marking conversation as read (PUT /api/messages/conversations/{id}/read)"""
+        if not self.auth_token:
+            self.log_test("Mark Conversation as Read", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'test_conversation_id') or not self.test_conversation_id:
+            self.log_test("Mark Conversation as Read", False, "No conversation ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("PUT", f"/messages/conversations/{self.test_conversation_id}/read")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Mark Conversation as Read", True, f"Conversation marked as read: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Mark Conversation as Read", False, f"Failed to mark conversation as read: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Mark Conversation as Read", False, f"Error: {str(e)}")
+    
+    def test_get_unread_count(self):
+        """Test getting unread message count (GET /api/messages/unread-count)"""
+        if not self.auth_token:
+            self.log_test("Get Unread Count", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/messages/unread-count")
+            
+            if response.status_code == 200:
+                data = response.json()
+                unread_count = data.get("unread_count", 0)
+                self.log_test("Get Unread Count", True, f"Unread message count: {unread_count}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Unread Count", False, f"Failed to get unread count: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Unread Count", False, f"Error: {str(e)}")
+    
+    def test_delete_message(self):
+        """Test deleting a message (DELETE /api/messages/messages/{id})"""
+        if not self.auth_token:
+            self.log_test("Delete Message", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'chat_participant_id') or not self.chat_participant_id:
+            self.log_test("Delete Message", False, "No chat participant available")
+            return
+            
+        try:
+            # Send a message to delete
+            message_data = {
+                "recipient_id": self.chat_participant_id,
+                "content": "This message will be deleted for testing purposes.",
+                "message_type": "text"
+            }
+            
+            send_response = self.make_request("POST", "/messages/send", message_data)
+            if send_response.status_code != 200:
+                self.log_test("Delete Message", False, "Could not send message to delete")
+                return
+            
+            message_to_delete = send_response.json()
+            message_id = message_to_delete.get("id")
+            
+            # Delete the message
+            response = self.make_request("DELETE", f"/messages/messages/{message_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Delete Message", True, f"Message deleted: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Delete Message", False, f"Failed to delete message: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Delete Message", False, f"Error: {str(e)}")
+    
+    def test_edit_message(self):
+        """Test editing a message (PUT /api/messages/messages/{id}/edit)"""
+        if not self.auth_token:
+            self.log_test("Edit Message", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'chat_participant_id') or not self.chat_participant_id:
+            self.log_test("Edit Message", False, "No chat participant available")
+            return
+            
+        try:
+            # Send a message to edit
+            message_data = {
+                "recipient_id": self.chat_participant_id,
+                "content": "This message will be edited.",
+                "message_type": "text"
+            }
+            
+            send_response = self.make_request("POST", "/messages/send", message_data)
+            if send_response.status_code != 200:
+                self.log_test("Edit Message", False, "Could not send message to edit")
+                return
+            
+            message_to_edit = send_response.json()
+            message_id = message_to_edit.get("id")
+            
+            # Edit the message
+            edit_data = {
+                "new_content": "This message has been edited successfully! The content is now updated."
+            }
+            
+            response = self.make_request("PUT", f"/messages/messages/{message_id}/edit", edit_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Edit Message", True, f"Message edited: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Edit Message", False, f"Failed to edit message: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Edit Message", False, f"Error: {str(e)}")
+    
+    def test_search_messages(self):
+        """Test searching messages (GET /api/messages/search)"""
+        if not self.auth_token:
+            self.log_test("Search Messages", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/messages/search", params={"query": "test", "limit": 10})
+            
+            if response.status_code == 200:
+                data = response.json()
+                messages = data.get("messages", [])
+                self.log_test("Search Messages", True, f"Found {len(messages)} messages matching 'test'", {"message_count": len(messages)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Search Messages", False, f"Failed to search messages: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Search Messages", False, f"Error: {str(e)}")
+    
+    def test_get_online_users(self):
+        """Test getting online users (GET /api/messages/online-users)"""
+        if not self.auth_token:
+            self.log_test("Get Online Users", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/messages/online-users")
+            
+            if response.status_code == 200:
+                data = response.json()
+                online_users = data.get("online_users", [])
+                self.log_test("Get Online Users", True, f"Retrieved {len(online_users)} online users", {"online_count": len(online_users)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Online Users", False, f"Failed to get online users: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Online Users", False, f"Error: {str(e)}")
+    
+    def test_messaging_authentication_required(self):
+        """Test that messaging endpoints require authentication"""
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Try to access conversations without authentication
+            response = self.make_request("GET", "/messages/conversations")
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if response.status_code in [401, 403]:
+                self.log_test("Messaging Authentication Required", True, f"Authentication correctly required ({response.status_code})")
+            else:
+                self.log_test("Messaging Authentication Required", False, f"Authentication not required - Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Messaging Authentication Required", False, f"Error: {str(e)}")
+    
+    def test_messaging_permission_controls(self):
+        """Test that users can only access their own conversations and messages"""
+        if not self.auth_token:
+            self.log_test("Messaging Permission Controls", False, "No auth token available")
+            return
+            
+        try:
+            # Create a third user who shouldn't have access to our conversations
+            timestamp = int(time.time())
+            unauthorized_user_data = {
+                "email": f"msgUnauth{timestamp}@skillswap.com",
+                "username": f"msgUnauth{timestamp}",
+                "password": "MsgUnauth123!",
+                "first_name": "Message",
+                "last_name": "Unauthorized",
+                "role": "both"
+            }
+            
+            unauthorized_response = self.make_request("POST", "/auth/register", unauthorized_user_data)
+            if unauthorized_response.status_code != 200:
+                self.log_test("Messaging Permission Controls", False, "Could not create unauthorized user")
+                return
+            
+            unauthorized_token = unauthorized_response.json().get("access_token")
+            
+            # Try to access our conversation with unauthorized token
+            if hasattr(self, 'test_conversation_id') and self.test_conversation_id:
+                # Temporarily switch to unauthorized token
+                original_token = self.auth_token
+                self.auth_token = unauthorized_token
+                
+                response = self.make_request("GET", f"/messages/conversations/{self.test_conversation_id}")
+                
+                # Restore original token
+                self.auth_token = original_token
+                
+                if response.status_code == 403:
+                    self.log_test("Messaging Permission Controls", True, "Unauthorized access correctly blocked (403 Forbidden)")
+                elif response.status_code == 404:
+                    self.log_test("Messaging Permission Controls", True, "Unauthorized access correctly blocked (404 Not Found)")
+                else:
+                    self.log_test("Messaging Permission Controls", False, f"Unauthorized access not blocked - Status: {response.status_code}")
+            else:
+                self.log_test("Messaging Permission Controls", False, "No conversation available to test permissions")
+                
+        except Exception as e:
+            self.log_test("Messaging Permission Controls", False, f"Error: {str(e)}")
+    
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting SkillSwap Marketplace Backend API Tests")
