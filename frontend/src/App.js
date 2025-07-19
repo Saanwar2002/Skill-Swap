@@ -81,6 +81,17 @@ function App() {
               }
             />
             
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Leaderboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
