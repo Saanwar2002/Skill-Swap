@@ -45,7 +45,7 @@ const Sessions = () => {
 
   const fetchSessions = async () => {
     try {
-      const response = await axios.get('/api/sessions', {
+      const response = await axios.get(`${API_BASE}/api/sessions`, {
         params: {
           role: filterRole,
           status: filterStatus,
@@ -61,7 +61,7 @@ const Sessions = () => {
 
   const fetchUpcomingSessions = async () => {
     try {
-      const response = await axios.get('/api/sessions/upcoming', {
+      const response = await axios.get(`${API_BASE}/api/sessions/upcoming`, {
         params: { limit: 10 }
       });
       setUpcomingSessions(response.data);
