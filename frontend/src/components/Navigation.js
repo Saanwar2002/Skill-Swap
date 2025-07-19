@@ -26,6 +26,7 @@ const Navigation = () => {
   const mainNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Marketplace', href: '/marketplace', icon: MagnifyingGlassIcon },
+    { name: 'Community', href: '/community', icon: UserGroupIcon },
     { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
     { name: 'Sessions', href: '/sessions', icon: StarIcon },
     { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
