@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 import os
 import uuid
@@ -14,10 +14,16 @@ from models import (
 
 
 class CommunityService:
-    def __init__(self):
-        mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/skillswap')
-        self.client = MongoClient(mongo_url)
-        self.db = self.client.skillswap
+    def __init__(self, db=None):
+        if db is not None:
+            # Use the provided database connection (from FastAPI dependency)
+            self.db = db
+        else:
+            # Create our own connection for standalone usage
+            mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+            db_name = os.environ.get('DB_NAME', 'skillswap')
+            self.client = AsyncIOMotorClient(mongo_url)
+            self.db = self.client[db_name]
         
         # Collections
         self.forums_collection = self.db.forums
