@@ -18,7 +18,7 @@ from routes.matching_routes import create_matching_router
 from routes.session_routes import create_session_router
 from routes.message_routes import create_message_router
 from routes.gamification_routes import create_gamification_router
-from routes.community_routes import router as community_router
+from routes.community_routes import create_community_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -76,7 +76,7 @@ api_router.include_router(create_matching_router(db))
 api_router.include_router(create_session_router(db))
 api_router.include_router(create_message_router(db))
 api_router.include_router(create_gamification_router(db))
-app.include_router(community_router)
+api_router.include_router(create_community_router(db))
 
 # Include the main router in the app
 app.include_router(api_router)
@@ -122,7 +122,7 @@ async def startup_event():
     # Initialize community features
     try:
         from services.community_service import CommunityService
-        community_service = CommunityService()
+        community_service = CommunityService(db)
         await community_service.initialize_default_forums()
         logger.info("Community system initialized")
     except Exception as e:
