@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def create_community_router(db):
     """Create community router with database dependency"""
-    router = APIRouter(prefix="/api/community", tags=["community"])
+    router = APIRouter(prefix="/community", tags=["community"])
     
     def get_community_service():
         return CommunityService(db)
