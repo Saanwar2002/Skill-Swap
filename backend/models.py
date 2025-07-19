@@ -532,3 +532,374 @@ class UserProgress(BaseModel):
     longest_streak: int
     leaderboard_rank: int
     recent_activities: List[Dict[str, Any]]
+
+
+# Community Models
+class PostType(str, Enum):
+    DISCUSSION = "discussion"
+    QUESTION = "question"
+    SHOWCASE = "showcase"
+    TUTORIAL = "tutorial"
+    RESOURCE = "resource"
+    TESTIMONIAL = "testimonial"
+
+
+class PostStatus(str, Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+    MODERATED = "moderated"
+
+
+class GroupType(str, Enum):
+    SKILL_BASED = "skill_based"
+    STUDY_GROUP = "study_group"
+    PROJECT_TEAM = "project_team"
+    GENERAL = "general"
+
+
+class GroupPrivacy(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    INVITE_ONLY = "invite_only"
+
+
+class Forum(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    skill_id: Optional[str] = None  # Link to specific skill
+    skill_name: Optional[str] = None
+    category: str
+    icon: Optional[str] = None  # Icon identifier or base64
+    color: str = "#3B82F6"
+    is_active: bool = True
+    created_by: str  # User ID
+    moderators: List[str] = []  # User IDs
+    
+    # Statistics
+    posts_count: int = 0
+    members_count: int = 0
+    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Post(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    content: str
+    post_type: PostType
+    status: PostStatus = PostStatus.PUBLISHED
+    
+    # Author and location
+    author_id: str
+    forum_id: str
+    group_id: Optional[str] = None
+    
+    # Rich content
+    images: List[str] = []  # base64 encoded images
+    attachments: List[Dict[str, Any]] = []  # files with metadata
+    tags: List[str] = []
+    
+    # Engagement
+    likes: List[str] = []  # User IDs who liked
+    views: int = 0
+    is_pinned: bool = False
+    is_featured: bool = False
+    
+    # Discussion
+    comments_count: int = 0
+    last_reply_at: Optional[datetime] = None
+    last_reply_by: Optional[str] = None
+    
+    # Showcase specific
+    project_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    github_url: Optional[str] = None
+    skills_demonstrated: List[str] = []
+    
+    # Tutorial specific
+    difficulty_level: Optional[str] = None  # beginner, intermediate, advanced
+    estimated_time: Optional[str] = None
+    prerequisites: List[str] = []
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Comment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content: str
+    author_id: str
+    post_id: str
+    parent_comment_id: Optional[str] = None  # For nested comments
+    
+    # Rich content
+    images: List[str] = []  # base64 encoded
+    attachments: List[Dict[str, Any]] = []
+    
+    # Engagement
+    likes: List[str] = []  # User IDs who liked
+    is_solution: bool = False  # Mark as solution for questions
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Group(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    group_type: GroupType
+    privacy: GroupPrivacy = GroupPrivacy.PUBLIC
+    
+    # Skills and focus
+    skills_focus: List[str] = []  # Skill names or IDs
+    category: str
+    
+    # Visual
+    image: Optional[str] = None  # base64 encoded group image
+    color: str = "#10B981"
+    
+    # Membership
+    created_by: str  # User ID
+    moderators: List[str] = []  # User IDs
+    members: List[str] = []  # User IDs
+    pending_requests: List[str] = []  # User IDs for private groups
+    max_members: Optional[int] = None
+    
+    # Activity
+    posts_count: int = 0
+    last_activity: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Study group specific
+    schedule: Optional[Dict[str, Any]] = {}  # Meeting times, etc.
+    learning_goals: List[str] = []
+    
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GroupMembership(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    group_id: str
+    role: str = "member"  # member, moderator, admin
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+
+class Testimonial(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    author_id: str  # Who wrote the testimonial
+    subject_id: str  # Who the testimonial is about
+    session_id: Optional[str] = None  # Related session
+    
+    content: str
+    rating: float = Field(ge=1, le=5)
+    skills_mentioned: List[str] = []
+    highlights: List[str] = []  # Key achievements or qualities
+    
+    # Visibility
+    is_featured: bool = False
+    is_approved: bool = True
+    is_public: bool = True
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class KnowledgeBase(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4))
+    title: str
+    content: str
+    category: str
+    subcategory: Optional[str] = None
+    
+    # Author and contribution
+    author_id: str
+    contributors: List[str] = []  # User IDs who contributed
+    
+    # Organization
+    tags: List[str] = []
+    skill_ids: List[str] = []  # Related skills
+    difficulty_level: str = "beginner"  # beginner, intermediate, advanced
+    
+    # Content structure
+    sections: List[Dict[str, Any]] = []  # Structured content sections
+    resources: List[Dict[str, Any]] = []  # External links, files, etc.
+    
+    # Engagement
+    views: int = 0
+    likes: List[str] = []  # User IDs
+    bookmarks: List[str] = []  # User IDs who bookmarked
+    
+    # Quality
+    is_verified: bool = False
+    verification_by: Optional[str] = None  # Moderator/expert who verified
+    last_reviewed: Optional[datetime] = None
+    
+    # Version control
+    version: str = "1.0"
+    change_log: List[Dict[str, Any]] = []
+    
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Community API Models
+class ForumCreate(BaseModel):
+    name: str
+    description: str
+    skill_id: Optional[str] = None
+    skill_name: Optional[str] = None
+    category: str
+    icon: Optional[str] = None
+    color: str = "#3B82F6"
+
+
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    post_type: PostType
+    forum_id: str
+    group_id: Optional[str] = None
+    images: List[str] = []
+    attachments: List[Dict[str, Any]] = []
+    tags: List[str] = []
+    
+    # Showcase specific
+    project_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    github_url: Optional[str] = None
+    skills_demonstrated: List[str] = []
+    
+    # Tutorial specific
+    difficulty_level: Optional[str] = None
+    estimated_time: Optional[str] = None
+    prerequisites: List[str] = []
+
+
+class PostUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    images: Optional[List[str]] = None
+    attachments: Optional[List[Dict[str, Any]]] = None
+    tags: Optional[List[str]] = None
+    is_pinned: Optional[bool] = None
+    is_featured: Optional[bool] = None
+    
+    # Showcase specific
+    project_url: Optional[str] = None
+    demo_url: Optional[str] = None
+    github_url: Optional[str] = None
+    skills_demonstrated: Optional[List[str]] = None
+    
+    # Tutorial specific
+    difficulty_level: Optional[str] = None
+    estimated_time: Optional[str] = None
+    prerequisites: Optional[List[str]] = None
+
+
+class CommentCreate(BaseModel):
+    content: str
+    post_id: str
+    parent_comment_id: Optional[str] = None
+    images: List[str] = []
+    attachments: List[Dict[str, Any]] = []
+
+
+class GroupCreate(BaseModel):
+    name: str
+    description: str
+    group_type: GroupType
+    privacy: GroupPrivacy = GroupPrivacy.PUBLIC
+    skills_focus: List[str] = []
+    category: str
+    image: Optional[str] = None
+    color: str = "#10B981"
+    max_members: Optional[int] = None
+    
+    # Study group specific
+    schedule: Optional[Dict[str, Any]] = {}
+    learning_goals: List[str] = []
+
+
+class TestimonialCreate(BaseModel):
+    subject_id: str  # Who the testimonial is about
+    session_id: Optional[str] = None
+    content: str
+    rating: float = Field(ge=1, le=5)
+    skills_mentioned: List[str] = []
+    highlights: List[str] = []
+    is_public: bool = True
+
+
+class KnowledgeBaseCreate(BaseModel):
+    title: str
+    content: str
+    category: str
+    subcategory: Optional[str] = None
+    tags: List[str] = []
+    skill_ids: List[str] = []
+    difficulty_level: str = "beginner"
+    sections: List[Dict[str, Any]] = []
+    resources: List[Dict[str, Any]] = []
+
+
+# Community Response Models
+class ForumResponse(BaseModel):
+    id: str
+    name: str
+    description: str
+    skill_id: Optional[str]
+    skill_name: Optional[str]
+    category: str
+    icon: Optional[str]
+    color: str
+    posts_count: int
+    members_count: int
+    last_activity: datetime
+    created_at: datetime
+
+
+class PostResponse(BaseModel):
+    id: str
+    title: str
+    content: str
+    post_type: PostType
+    status: PostStatus
+    author_id: str
+    author_name: str
+    author_avatar: Optional[str]
+    forum_id: str
+    forum_name: str
+    group_id: Optional[str]
+    group_name: Optional[str]
+    images: List[str]
+    attachments: List[Dict[str, Any]]
+    tags: List[str]
+    likes_count: int
+    views: int
+    comments_count: int
+    is_pinned: bool
+    is_featured: bool
+    last_reply_at: Optional[datetime]
+    last_reply_by: Optional[str]
+    
+    # Showcase specific
+    project_url: Optional[str]
+    demo_url: Optional[str]
+    github_url: Optional[str]
+    skills_demonstrated: List[str]
+    
+    # Tutorial specific
+    difficulty_level: Optional[str]
+    estimated_time: Optional[str]
+    prerequisites: List[str]
+    
+    created_at: datetime
+    updated_at: datetime
