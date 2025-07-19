@@ -61,6 +61,17 @@ function App() {
             />
             
             <Route
+              path="/community"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Community />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="/sessions"
               element={
                 <ProtectedRoute>
