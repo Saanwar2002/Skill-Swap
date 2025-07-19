@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Marketplace from "./pages/Marketplace";
+import Community from "./pages/Community";
 import Sessions from "./pages/Sessions";
 import Messages from "./pages/Messages";
 import Leaderboard from "./pages/Leaderboard";
