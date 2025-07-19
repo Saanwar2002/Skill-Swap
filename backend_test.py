@@ -1928,6 +1928,635 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Badge System Integration", False, f"Error: {str(e)}")
     
+    # ===== COMMUNITY FEATURES TESTS =====
+    
+    def test_get_forums(self):
+        """Test getting all forums (GET /api/community/forums)"""
+        if not self.auth_token:
+            self.log_test("Get Forums", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/forums")
+            
+            if response.status_code == 200:
+                data = response.json()
+                forum_count = len(data)
+                forum_categories = list(set([forum.get('category') for forum in data]))
+                self.log_test("Get Forums", True, f"Retrieved {forum_count} forums with categories: {forum_categories}", {
+                    "forum_count": forum_count,
+                    "sample_forums": data[:3] if data else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Forums", False, f"Failed to get forums: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Forums", False, f"Error: {str(e)}")
+    
+    def test_create_forum(self):
+        """Test creating a new forum (POST /api/community/forums)"""
+        if not self.auth_token:
+            self.log_test("Create Forum", False, "No auth token available")
+            return
+            
+        try:
+            timestamp = int(time.time())
+            forum_data = {
+                "name": f"Test Forum {timestamp}",
+                "description": "A test forum for automated testing purposes",
+                "category": "Testing",
+                "icon": "🧪",
+                "color": "#FF6B6B"
+            }
+            
+            response = self.make_request("POST", "/community/forums", forum_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_forum_id = data.get("id")  # Store for other tests
+                self.log_test("Create Forum", True, f"Forum created: {data.get('name')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Forum", False, f"Failed to create forum: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Forum", False, f"Error: {str(e)}")
+    
+    def test_get_specific_forum(self):
+        """Test getting a specific forum (GET /api/community/forums/{forum_id})"""
+        if not self.auth_token:
+            self.log_test("Get Specific Forum", False, "No auth token available")
+            return
+        
+        # First get all forums to get a valid forum ID
+        try:
+            forums_response = self.make_request("GET", "/community/forums")
+            if forums_response.status_code != 200:
+                self.log_test("Get Specific Forum", False, "Could not retrieve forums list")
+                return
+            
+            forums = forums_response.json()
+            if not forums:
+                self.log_test("Get Specific Forum", False, "No forums available")
+                return
+            
+            forum_id = forums[0]["id"]
+            
+            response = self.make_request("GET", f"/community/forums/{forum_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Specific Forum", True, f"Retrieved forum: {data.get('name')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Specific Forum", False, f"Failed to get forum: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Specific Forum", False, f"Error: {str(e)}")
+    
+    def test_get_posts(self):
+        """Test getting posts with filtering (GET /api/community/posts)"""
+        if not self.auth_token:
+            self.log_test("Get Posts", False, "No auth token available")
+            return
+            
+        try:
+            # Test 1: Get all posts
+            response1 = self.make_request("GET", "/community/posts")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Get Posts - All", True, f"Retrieved {len(data1)} posts", {"post_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Get Posts - All", False, f"Failed to get posts: {error_detail}")
+            
+            # Test 2: Get posts by type
+            response2 = self.make_request("GET", "/community/posts", params={"post_type": "discussion"})
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Get Posts - Discussion Type", True, f"Retrieved {len(data2)} discussion posts", {"post_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Get Posts - Discussion Type", False, f"Failed to get discussion posts: {error_detail}")
+            
+            # Test 3: Search posts
+            response3 = self.make_request("GET", "/community/posts", params={"search": "python"})
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Get Posts - Search", True, f"Found {len(data3)} posts matching 'python'", {"post_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Get Posts - Search", False, f"Failed to search posts: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Posts", False, f"Error: {str(e)}")
+    
+    def test_create_post(self):
+        """Test creating a new post (POST /api/community/posts)"""
+        if not self.auth_token:
+            self.log_test("Create Post", False, "No auth token available")
+            return
+            
+        try:
+            # First get forums to get a valid forum ID
+            forums_response = self.make_request("GET", "/community/forums")
+            if forums_response.status_code != 200:
+                self.log_test("Create Post", False, "Could not retrieve forums list")
+                return
+            
+            forums = forums_response.json()
+            if not forums:
+                self.log_test("Create Post", False, "No forums available")
+                return
+            
+            forum_id = forums[0]["id"]
+            timestamp = int(time.time())
+            
+            post_data = {
+                "title": f"Test Discussion Post {timestamp}",
+                "content": "This is a test post created by the automated testing system. It demonstrates the community posting functionality.",
+                "post_type": "discussion",
+                "forum_id": forum_id,
+                "tags": ["testing", "automation", "community"]
+            }
+            
+            response = self.make_request("POST", "/community/posts", post_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_post_id = data.get("id")  # Store for other tests
+                self.log_test("Create Post", True, f"Post created: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Post", False, f"Failed to create post: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Post", False, f"Error: {str(e)}")
+    
+    def test_get_specific_post(self):
+        """Test getting a specific post (GET /api/community/posts/{post_id})"""
+        if not self.auth_token:
+            self.log_test("Get Specific Post", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_post_id') or not self.created_post_id:
+            self.log_test("Get Specific Post", False, "No post ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/community/posts/{self.created_post_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Specific Post", True, f"Retrieved post: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Specific Post", False, f"Failed to get post: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Specific Post", False, f"Error: {str(e)}")
+    
+    def test_update_post(self):
+        """Test updating a post (PUT /api/community/posts/{post_id})"""
+        if not self.auth_token:
+            self.log_test("Update Post", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_post_id') or not self.created_post_id:
+            self.log_test("Update Post", False, "No post ID available from previous test")
+            return
+            
+        try:
+            update_data = {
+                "title": "Updated Test Discussion Post",
+                "content": "This post has been updated by the automated testing system to verify the update functionality.",
+                "tags": ["testing", "automation", "community", "updated"]
+            }
+            
+            response = self.make_request("PUT", f"/community/posts/{self.created_post_id}", update_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Update Post", True, f"Post updated: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Update Post", False, f"Failed to update post: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Update Post", False, f"Error: {str(e)}")
+    
+    def test_toggle_post_like(self):
+        """Test toggling like on a post (POST /api/community/posts/{post_id}/like)"""
+        if not self.auth_token:
+            self.log_test("Toggle Post Like", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_post_id') or not self.created_post_id:
+            self.log_test("Toggle Post Like", False, "No post ID available from previous test")
+            return
+            
+        try:
+            # Like the post
+            response1 = self.make_request("POST", f"/community/posts/{self.created_post_id}/like")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                liked = data1.get("liked", False)
+                
+                # Unlike the post
+                response2 = self.make_request("POST", f"/community/posts/{self.created_post_id}/like")
+                
+                if response2.status_code == 200:
+                    data2 = response2.json()
+                    unliked = not data2.get("liked", True)
+                    
+                    self.log_test("Toggle Post Like", True, f"Post like toggled: liked={liked}, then unliked={unliked}", {
+                        "first_action": data1,
+                        "second_action": data2
+                    })
+                else:
+                    self.log_test("Toggle Post Like", False, "Failed to unlike post")
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Toggle Post Like", False, f"Failed to like post: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Toggle Post Like", False, f"Error: {str(e)}")
+    
+    def test_get_post_comments(self):
+        """Test getting comments for a post (GET /api/community/posts/{post_id}/comments)"""
+        if not self.auth_token:
+            self.log_test("Get Post Comments", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_post_id') or not self.created_post_id:
+            self.log_test("Get Post Comments", False, "No post ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/community/posts/{self.created_post_id}/comments")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Post Comments", True, f"Retrieved {len(data)} comments", {"comment_count": len(data)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Post Comments", False, f"Failed to get comments: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Post Comments", False, f"Error: {str(e)}")
+    
+    def test_create_comment(self):
+        """Test creating a comment (POST /api/community/comments)"""
+        if not self.auth_token:
+            self.log_test("Create Comment", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_post_id') or not self.created_post_id:
+            self.log_test("Create Comment", False, "No post ID available from previous test")
+            return
+            
+        try:
+            comment_data = {
+                "content": "This is a test comment created by the automated testing system.",
+                "post_id": self.created_post_id
+            }
+            
+            response = self.make_request("POST", "/community/comments", comment_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_comment_id = data.get("id")  # Store for other tests
+                self.log_test("Create Comment", True, f"Comment created: {data.get('content')[:50]}...", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Comment", False, f"Failed to create comment: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Comment", False, f"Error: {str(e)}")
+    
+    def test_toggle_comment_like(self):
+        """Test toggling like on a comment (POST /api/community/comments/{comment_id}/like)"""
+        if not self.auth_token:
+            self.log_test("Toggle Comment Like", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_comment_id') or not self.created_comment_id:
+            self.log_test("Toggle Comment Like", False, "No comment ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("POST", f"/community/comments/{self.created_comment_id}/like")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Toggle Comment Like", True, f"Comment like toggled: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Toggle Comment Like", False, f"Failed to toggle comment like: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Toggle Comment Like", False, f"Error: {str(e)}")
+    
+    def test_get_groups(self):
+        """Test getting groups (GET /api/community/groups)"""
+        if not self.auth_token:
+            self.log_test("Get Groups", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/groups")
+            
+            if response.status_code == 200:
+                data = response.json()
+                group_count = len(data)
+                group_types = list(set([group.get('group_type') for group in data]))
+                self.log_test("Get Groups", True, f"Retrieved {group_count} groups with types: {group_types}", {
+                    "group_count": group_count,
+                    "sample_groups": data[:3] if data else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Groups", False, f"Failed to get groups: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Groups", False, f"Error: {str(e)}")
+    
+    def test_create_group(self):
+        """Test creating a group (POST /api/community/groups)"""
+        if not self.auth_token:
+            self.log_test("Create Group", False, "No auth token available")
+            return
+            
+        try:
+            timestamp = int(time.time())
+            group_data = {
+                "name": f"Test Study Group {timestamp}",
+                "description": "A test study group for automated testing purposes",
+                "group_type": "study_group",
+                "privacy": "public",
+                "skills_focus": ["Python", "JavaScript"],
+                "category": "Programming",
+                "learning_goals": ["Learn Python basics", "Build web applications"]
+            }
+            
+            response = self.make_request("POST", "/community/groups", group_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_group_id = data.get("id")  # Store for other tests
+                self.log_test("Create Group", True, f"Group created: {data.get('name')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Group", False, f"Failed to create group: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Group", False, f"Error: {str(e)}")
+    
+    def test_join_group(self):
+        """Test joining a group (POST /api/community/groups/{group_id}/join)"""
+        if not self.auth_token:
+            self.log_test("Join Group", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_group_id') or not self.created_group_id:
+            self.log_test("Join Group", False, "No group ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("POST", f"/community/groups/{self.created_group_id}/join")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Join Group", True, f"Group join result: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Join Group", False, f"Failed to join group: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Join Group", False, f"Error: {str(e)}")
+    
+    def test_get_testimonials(self):
+        """Test getting testimonials (GET /api/community/testimonials)"""
+        if not self.auth_token:
+            self.log_test("Get Testimonials", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/testimonials")
+            
+            if response.status_code == 200:
+                data = response.json()
+                testimonial_count = len(data)
+                self.log_test("Get Testimonials", True, f"Retrieved {testimonial_count} testimonials", {
+                    "testimonial_count": testimonial_count,
+                    "sample_testimonials": data[:3] if data else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Testimonials", False, f"Failed to get testimonials: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Testimonials", False, f"Error: {str(e)}")
+    
+    def test_create_testimonial(self):
+        """Test creating a testimonial (POST /api/community/testimonials)"""
+        if not self.auth_token:
+            self.log_test("Create Testimonial", False, "No auth token available")
+            return
+            
+        try:
+            # Create a second user to write testimonial about
+            timestamp = int(time.time())
+            subject_user_data = {
+                "email": f"testimonialsubject{timestamp}@skillswap.com",
+                "username": f"testimonialsubject{timestamp}",
+                "password": "TestimonialSubject123!",
+                "first_name": "Testimonial",
+                "last_name": "Subject",
+                "role": "teacher"
+            }
+            
+            subject_response = self.make_request("POST", "/auth/register", subject_user_data)
+            if subject_response.status_code != 200:
+                self.log_test("Create Testimonial", False, "Could not create subject user")
+                return
+            
+            subject_user = subject_response.json().get("user", {})
+            
+            testimonial_data = {
+                "subject_id": subject_user["id"],
+                "content": "This is a test testimonial created by the automated testing system. The subject is an excellent teacher with great communication skills.",
+                "rating": 4.5,
+                "skills_mentioned": ["Python", "Teaching"],
+                "highlights": ["Clear explanations", "Patient instructor", "Practical examples"]
+            }
+            
+            response = self.make_request("POST", "/community/testimonials", testimonial_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Create Testimonial", True, f"Testimonial created with rating {data.get('rating')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Testimonial", False, f"Failed to create testimonial: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Testimonial", False, f"Error: {str(e)}")
+    
+    def test_get_knowledge_base(self):
+        """Test getting knowledge base entries (GET /api/community/knowledge-base)"""
+        if not self.auth_token:
+            self.log_test("Get Knowledge Base", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/knowledge-base")
+            
+            if response.status_code == 200:
+                data = response.json()
+                kb_count = len(data)
+                categories = list(set([entry.get('category') for entry in data]))
+                self.log_test("Get Knowledge Base", True, f"Retrieved {kb_count} knowledge base entries with categories: {categories}", {
+                    "kb_count": kb_count,
+                    "sample_entries": data[:3] if data else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Knowledge Base", False, f"Failed to get knowledge base: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Knowledge Base", False, f"Error: {str(e)}")
+    
+    def test_create_knowledge_base_entry(self):
+        """Test creating a knowledge base entry (POST /api/community/knowledge-base)"""
+        if not self.auth_token:
+            self.log_test("Create Knowledge Base Entry", False, "No auth token available")
+            return
+            
+        try:
+            # Get skills to reference in the KB entry
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("Create Knowledge Base Entry", False, "Could not retrieve skills list")
+                return
+            
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Create Knowledge Base Entry", False, "No skills available")
+                return
+            
+            python_skill = next((skill for skill in skills if "Python" in skill.get("name", "")), skills[0])
+            
+            timestamp = int(time.time())
+            kb_data = {
+                "title": f"Python Best Practices Guide {timestamp}",
+                "content": "This is a comprehensive guide to Python best practices created by the automated testing system. It covers coding standards, documentation, and testing approaches.",
+                "category": "Programming",
+                "subcategory": "Best Practices",
+                "tags": ["python", "best-practices", "coding-standards"],
+                "skill_ids": [python_skill["id"]],
+                "difficulty_level": "intermediate",
+                "sections": [
+                    {"title": "Code Style", "content": "Follow PEP 8 guidelines"},
+                    {"title": "Documentation", "content": "Write clear docstrings"},
+                    {"title": "Testing", "content": "Use pytest for testing"}
+                ],
+                "resources": [
+                    {"title": "PEP 8", "url": "https://pep8.org", "type": "documentation"}
+                ]
+            }
+            
+            response = self.make_request("POST", "/community/knowledge-base", kb_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Create Knowledge Base Entry", True, f"KB entry created: {data.get('title')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Knowledge Base Entry", False, f"Failed to create KB entry: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Knowledge Base Entry", False, f"Error: {str(e)}")
+    
+    def test_get_community_stats(self):
+        """Test getting community statistics (GET /api/community/stats)"""
+        if not self.auth_token:
+            self.log_test("Get Community Stats", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/stats")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Community Stats", True, "Retrieved community statistics", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Community Stats", False, f"Failed to get community stats: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Community Stats", False, f"Error: {str(e)}")
+    
+    def test_get_trending_topics(self):
+        """Test getting trending topics (GET /api/community/trending)"""
+        if not self.auth_token:
+            self.log_test("Get Trending Topics", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/community/trending", params={"days": 7})
+            
+            if response.status_code == 200:
+                data = response.json()
+                trending_topics = data.get("trending_topics", [])
+                self.log_test("Get Trending Topics", True, f"Retrieved {len(trending_topics)} trending topics", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Trending Topics", False, f"Failed to get trending topics: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Trending Topics", False, f"Error: {str(e)}")
+    
+    def test_community_authentication_required(self):
+        """Test that community endpoints require authentication"""
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Try to access community endpoints without authentication
+            endpoints_to_test = [
+                "/community/forums",
+                "/community/posts",
+                "/community/groups",
+                "/community/testimonials",
+                "/community/knowledge-base",
+                "/community/stats",
+                "/community/trending"
+            ]
+            
+            auth_required_count = 0
+            for endpoint in endpoints_to_test:
+                response = self.make_request("GET", endpoint)
+                if response.status_code in [401, 403]:
+                    auth_required_count += 1
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if auth_required_count == len(endpoints_to_test):
+                self.log_test("Community Authentication Required", True, f"Authentication correctly required for all {len(endpoints_to_test)} endpoints")
+            else:
+                self.log_test("Community Authentication Required", False, f"Authentication not required for {len(endpoints_to_test) - auth_required_count} endpoints")
+                
+        except Exception as e:
+            self.log_test("Community Authentication Required", False, f"Error: {str(e)}")
+    
     
     def run_all_tests(self):
         """Run all backend tests"""
