@@ -12,7 +12,8 @@ import {
   ChatBubbleLeftRightIcon,
   StarIcon,
   TrophyIcon,
-  BellIcon
+  BellIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 
 const Navigation = () => {
