@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Marketplace from "./pages/Marketplace";
 import Sessions from "./pages/Sessions";
 import Messages from "./pages/Messages";
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
