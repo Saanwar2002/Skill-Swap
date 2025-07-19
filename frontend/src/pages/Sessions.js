@@ -35,6 +35,8 @@ const Sessions = () => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedback, setFeedback] = useState({ rating: 5, comment: '' });
 
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+
   // Fetch sessions
   useEffect(() => {
     fetchSessions();
