@@ -1,25 +1,39 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import List, Optional
 import logging
 
-from auth import get_current_user
 from models import (
     User, ForumCreate, PostCreate, PostUpdate, CommentCreate, GroupCreate,
     TestimonialCreate, KnowledgeBaseCreate, Forum, Post, Comment, Group,
     Testimonial, KnowledgeBase, ForumResponse, PostResponse, PostType, GroupType
 )
 from services.community_service import CommunityService
+from auth import AuthService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+security = HTTPBearer()
 
 def create_community_router(db):
     """Create community router with database dependency"""
     router = APIRouter(prefix="/community", tags=["community"])
+    auth_service = AuthService(db)
     
     def get_community_service():
         return CommunityService(db)
+
+    async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+        """Get current authenticated user"""
+        try:
+            token = credentials.credentials
+            return await auth_service.get_current_user(token)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials"
+            )
 
     # Forum Endpoints
     @router.get("/forums", response_model=List[ForumResponse])
