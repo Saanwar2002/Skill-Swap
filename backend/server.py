@@ -118,6 +118,15 @@ async def startup_event():
         logger.info("Gamification system initialized")
     except Exception as e:
         logger.error(f"Failed to initialize gamification system: {str(e)}")
+    
+    # Initialize community features
+    try:
+        from services.community_service import CommunityService
+        community_service = CommunityService()
+        await community_service.initialize_default_forums()
+        logger.info("Community system initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize community system: {str(e)}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
