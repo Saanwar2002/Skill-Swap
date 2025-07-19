@@ -39,8 +39,18 @@ const Sessions = () => {
 
   // Fetch sessions
   useEffect(() => {
-    fetchSessions();
-    fetchUpcomingSessions();
+    const loadSessions = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchSessions(), fetchUpcomingSessions()]);
+      } catch (err) {
+        console.error('Error loading sessions:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadSessions();
   }, []);
 
   const fetchSessions = async () => {
