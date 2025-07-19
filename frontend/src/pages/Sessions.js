@@ -86,7 +86,7 @@ const Sessions = () => {
 
   const handleSessionAction = async (sessionId, action, data = {}) => {
     try {
-      await axios.post(`/api/sessions/${sessionId}/${action}`, data);
+      await axios.post(`${API_BASE}/api/sessions/${sessionId}/${action}`, data);
       fetchSessions();
       fetchUpcomingSessions();
       
@@ -105,7 +105,7 @@ const Sessions = () => {
 
   const handleFeedbackSubmit = async () => {
     try {
-      await axios.post(`/api/sessions/${selectedSession.id}/feedback`, null, {
+      await axios.post(`${API_BASE}/api/sessions/${selectedSession.id}/feedback`, null, {
         params: {
           rating: feedback.rating,
           feedback: feedback.comment
