@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://4b869601-8f24-43a7-86e2-890808928b40.preview.emergentagent.com/api"
+BASE_URL = "https://eef5dc37-7281-49be-87b1-e116ac3c7b10.preview.emergentagent.com/api"
 TIMEOUT = 30
 
 def test_messaging_system():
