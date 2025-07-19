@@ -19,8 +19,7 @@ community_service = CommunityService()
 
 
 # Initialize default forums on startup
-@router.on_event("startup")
-async def startup_event():
+async def initialize_community_defaults():
     """Initialize default forums when the service starts"""
     try:
         await community_service.initialize_default_forums()
