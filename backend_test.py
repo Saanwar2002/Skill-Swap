@@ -2997,6 +2997,17 @@ class SkillSwapTester:
         self.test_get_trending_topics()
         self.test_community_authentication_required()
         
+        # WebRTC Video Chat Tests (NEW FEATURES)
+        print("\n📹 Testing WebRTC Video Chat System...")
+        self.test_get_webrtc_config()
+        self.test_get_session_info_for_webrtc()
+        self.test_start_video_call()
+        self.test_end_video_call()
+        self.test_webrtc_session_access_control()
+        self.test_webrtc_authentication_required()
+        self.test_webrtc_invalid_session_handling()
+        self.test_webrtc_session_status_validation()
+        
         # Print summary
         self.print_summary()
     
