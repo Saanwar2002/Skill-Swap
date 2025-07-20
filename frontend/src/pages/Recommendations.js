@@ -168,7 +168,7 @@ const Recommendations = () => {
       skill_teaching: AcademicCapIcon,
       user_match: UserIcon,
       session_timing: ClockIcon,
-      learning_path: TargetIcon,
+      learning_path: BookOpenIcon,
       community_content: UserGroupIcon,
       goal_suggestion: StarIcon
     };
