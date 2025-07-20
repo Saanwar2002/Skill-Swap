@@ -270,6 +270,23 @@ const VideoChat = ({ sessionId, onClose, sessionDetails }) => {
             )}
           </button>
 
+          {/* Whiteboard Toggle */}
+          <button
+            onClick={() => setShowWhiteboard(!showWhiteboard)}
+            className={`p-4 rounded-full transition-colors ${
+              showWhiteboard 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : 'bg-gray-700 hover:bg-gray-600'
+            }`}
+            title={showWhiteboard ? 'Hide whiteboard' : 'Show whiteboard'}
+          >
+            {showWhiteboard ? (
+              <PencilSquareIconSolid className="h-6 w-6 text-white" />
+            ) : (
+              <PencilSquareIcon className="h-6 w-6 text-white" />
+            )}
+          </button>
+
           {/* End Call */}
           <button
             onClick={handleEndCall}
