@@ -422,6 +422,7 @@ const useWebRTC = (sessionId) => {
     setIsMuted(false);
     setIsVideoOff(false);
     setIsScreenSharing(false);
+    setWhiteboardEvents([]);
     
     screenStreamRef.current = null;
     originalStreamRef.current = null;
