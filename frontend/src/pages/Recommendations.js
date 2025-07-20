@@ -191,7 +191,7 @@ const Recommendations = () => {
   const tabs = [
     { id: 'dashboard', name: 'Dashboard', icon: ChartBarIcon },
     { id: 'all', name: 'All Recommendations', icon: LightBulbIcon },
-    { id: 'goals', name: 'Learning Goals', icon: TargetIcon },
+    { id: 'goals', name: 'Learning Goals', icon: BookOpenIcon },
     { id: 'insights', name: 'Insights', icon: ChartBarIcon }
   ];
 
