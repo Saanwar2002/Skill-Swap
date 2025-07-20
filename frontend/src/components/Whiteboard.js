@@ -574,10 +574,14 @@ const Whiteboard = ({
             Tool: {selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)} | 
             Color: {brushColor} | 
             Size: {brushSize}px
+            {lastSaved && (
+              <span className="ml-2 text-green-600">• Last saved: {lastSaved}</span>
+            )}
           </div>
           <div>
             History: {historyIndex + 1}/{canvasHistory.length} | 
             Canvas: 800x600
+            {isLoading && <span className="ml-2 text-blue-600">• Saving...</span>}
           </div>
         </div>
       </div>
