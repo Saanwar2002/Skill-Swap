@@ -3042,7 +3042,7 @@ class SkillSwapTester:
             return
             
         try:
-            response = self.make_request("PUT", "/notifications/mark-all-read")
+            response = self.make_request("PUT", "/notifications/mark-all-read", {})
             
             if response.status_code == 200:
                 data = response.json()
