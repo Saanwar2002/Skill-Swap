@@ -1204,6 +1204,685 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Token Refresh", False, f"Error: {str(e)}")
     
+    # ===== SMART NOTIFICATIONS SYSTEM TESTS =====
+    
+    def test_get_user_notifications(self):
+        """Test getting user notifications with filtering (GET /api/notifications/)"""
+        if not self.auth_token:
+            self.log_test("Get User Notifications", False, "No auth token available")
+            return
+            
+        try:
+            # Test 1: Get all notifications
+            response1 = self.make_request("GET", "/notifications/")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Get User Notifications - All", True, f"Retrieved {len(data1)} notifications", {"notification_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Get User Notifications - All", False, f"Failed to get notifications: {error_detail}")
+            
+            # Test 2: Get unread notifications only
+            response2 = self.make_request("GET", "/notifications/", params={"unread_only": True})
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Get User Notifications - Unread Only", True, f"Retrieved {len(data2)} unread notifications", {"unread_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Get User Notifications - Unread Only", False, f"Failed to get unread notifications: {error_detail}")
+            
+            # Test 3: Get notifications with type filter
+            response3 = self.make_request("GET", "/notifications/", params={"notification_types": "match_found,session_reminder"})
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Get User Notifications - Type Filter", True, f"Retrieved {len(data3)} filtered notifications", {"filtered_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Get User Notifications - Type Filter", False, f"Failed to get filtered notifications: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Notifications", False, f"Error: {str(e)}")
+    
+    def test_get_notification_count(self):
+        """Test getting unread notification count (GET /api/notifications/count)"""
+        if not self.auth_token:
+            self.log_test("Get Notification Count", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/notifications/count")
+            
+            if response.status_code == 200:
+                data = response.json()
+                unread_count = data.get("unread_count", 0)
+                self.log_test("Get Notification Count", True, f"Unread count: {unread_count}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Notification Count", False, f"Failed to get notification count: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Notification Count", False, f"Error: {str(e)}")
+    
+    def test_get_notification_stats(self):
+        """Test getting notification statistics (GET /api/notifications/stats)"""
+        if not self.auth_token:
+            self.log_test("Get Notification Stats", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/notifications/stats")
+            
+            if response.status_code == 200:
+                data = response.json()
+                total_notifications = data.get("total_notifications", 0)
+                total_unread = data.get("total_unread", 0)
+                self.log_test("Get Notification Stats", True, f"Total: {total_notifications}, Unread: {total_unread}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Notification Stats", False, f"Failed to get notification stats: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Notification Stats", False, f"Error: {str(e)}")
+    
+    def test_create_notification(self):
+        """Test creating a notification (POST /api/notifications/)"""
+        if not self.auth_token:
+            self.log_test("Create Notification", False, "No auth token available")
+            return
+            
+        try:
+            notification_data = {
+                "user_id": self.test_user_id,
+                "notification_type": "system_announcement",
+                "title": "🎉 Welcome to SkillSwap!",
+                "message": "Welcome to the SkillSwap community! Start exploring skills and connecting with other learners.",
+                "priority": "medium",
+                "data": {
+                    "welcome_bonus": 50,
+                    "onboarding_step": 1
+                },
+                "action_url": "/dashboard"
+            }
+            
+            response = self.make_request("POST", "/notifications/", notification_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_notification_id = data.get("notification_id")  # Store for other tests
+                self.log_test("Create Notification", True, f"Notification created: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Notification", False, f"Failed to create notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Notification", False, f"Error: {str(e)}")
+    
+    def test_update_notification(self):
+        """Test updating notification (mark as read) (PUT /api/notifications/{id})"""
+        if not self.auth_token:
+            self.log_test("Update Notification", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_notification_id') or not self.created_notification_id:
+            self.log_test("Update Notification", False, "No notification ID available from previous test")
+            return
+            
+        try:
+            update_data = {
+                "is_read": True
+            }
+            
+            response = self.make_request("PUT", f"/notifications/{self.created_notification_id}", update_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Update Notification", True, f"Notification updated: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Update Notification", False, f"Failed to update notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Update Notification", False, f"Error: {str(e)}")
+    
+    def test_mark_all_notifications_read(self):
+        """Test marking all notifications as read (PUT /api/notifications/mark-all-read)"""
+        if not self.auth_token:
+            self.log_test("Mark All Notifications Read", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("PUT", "/notifications/mark-all-read")
+            
+            if response.status_code == 200:
+                data = response.json()
+                marked_count = data.get("marked_read", 0)
+                self.log_test("Mark All Notifications Read", True, f"Marked {marked_count} notifications as read", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Mark All Notifications Read", False, f"Failed to mark all as read: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Mark All Notifications Read", False, f"Error: {str(e)}")
+    
+    def test_delete_notification(self):
+        """Test deleting a notification (DELETE /api/notifications/{id})"""
+        if not self.auth_token:
+            self.log_test("Delete Notification", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_notification_id') or not self.created_notification_id:
+            self.log_test("Delete Notification", False, "No notification ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("DELETE", f"/notifications/{self.created_notification_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Delete Notification", True, f"Notification deleted: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Delete Notification", False, f"Failed to delete notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Delete Notification", False, f"Error: {str(e)}")
+    
+    def test_get_notification_preferences(self):
+        """Test getting notification preferences (GET /api/notifications/preferences)"""
+        if not self.auth_token:
+            self.log_test("Get Notification Preferences", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/notifications/preferences")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Notification Preferences", True, "Retrieved notification preferences", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Notification Preferences", False, f"Failed to get preferences: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Notification Preferences", False, f"Error: {str(e)}")
+    
+    def test_update_notification_preferences(self):
+        """Test updating notification preferences (PUT /api/notifications/preferences)"""
+        if not self.auth_token:
+            self.log_test("Update Notification Preferences", False, "No auth token available")
+            return
+            
+        try:
+            preferences_data = {
+                "email_notifications": True,
+                "push_notifications": True,
+                "match_notifications": True,
+                "session_reminders": True,
+                "message_notifications": False,  # Disable message notifications
+                "achievement_notifications": True,
+                "community_notifications": True,
+                "digest_frequency": "weekly",
+                "quiet_hours_start": "23:00",
+                "quiet_hours_end": "07:00"
+            }
+            
+            response = self.make_request("PUT", "/notifications/preferences", preferences_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Update Notification Preferences", True, "Notification preferences updated", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Update Notification Preferences", False, f"Failed to update preferences: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Update Notification Preferences", False, f"Error: {str(e)}")
+    
+    def test_quick_notification_match_found(self):
+        """Test quick match found notification (POST /api/notifications/quick/match-found)"""
+        if not self.auth_token:
+            self.log_test("Quick Notification - Match Found", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'chat_participant_id') or not self.chat_participant_id:
+            self.log_test("Quick Notification - Match Found", False, "No match user ID available from previous test")
+            return
+            
+        try:
+            match_data = {
+                "match_user_id": self.chat_participant_id,
+                "compatibility_score": 0.85
+            }
+            
+            response = self.make_request("POST", "/notifications/quick/match-found", match_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Quick Notification - Match Found", True, f"Match notification sent: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Quick Notification - Match Found", False, f"Failed to send match notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Quick Notification - Match Found", False, f"Error: {str(e)}")
+    
+    def test_quick_notification_session_reminder(self):
+        """Test quick session reminder notification (POST /api/notifications/quick/session-reminder)"""
+        if not self.auth_token:
+            self.log_test("Quick Notification - Session Reminder", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Quick Notification - Session Reminder", False, "No session ID available from previous test")
+            return
+            
+        try:
+            from datetime import datetime, timedelta
+            reminder_data = {
+                "session_id": self.created_session_id,
+                "session_title": "Python Fundamentals - Variables and Data Types",
+                "starts_at": (datetime.utcnow() + timedelta(hours=1)).isoformat()
+            }
+            
+            response = self.make_request("POST", "/notifications/quick/session-reminder", reminder_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Quick Notification - Session Reminder", True, f"Session reminder sent: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Quick Notification - Session Reminder", False, f"Failed to send session reminder: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Quick Notification - Session Reminder", False, f"Error: {str(e)}")
+    
+    def test_quick_notification_achievement_earned(self):
+        """Test quick achievement earned notification (POST /api/notifications/quick/achievement-earned)"""
+        if not self.auth_token:
+            self.log_test("Quick Notification - Achievement Earned", False, "No auth token available")
+            return
+            
+        try:
+            achievement_data = {
+                "achievement_name": "First Session Completed",
+                "achievement_id": "first_session_achievement",
+                "coins_earned": 25
+            }
+            
+            response = self.make_request("POST", "/notifications/quick/achievement-earned", achievement_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Quick Notification - Achievement Earned", True, f"Achievement notification sent: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Quick Notification - Achievement Earned", False, f"Failed to send achievement notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Quick Notification - Achievement Earned", False, f"Error: {str(e)}")
+    
+    def test_quick_notification_message_received(self):
+        """Test quick message received notification (POST /api/notifications/quick/message-received)"""
+        if not self.auth_token:
+            self.log_test("Quick Notification - Message Received", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'test_conversation_id') or not self.test_conversation_id:
+            self.log_test("Quick Notification - Message Received", False, "No conversation ID available from previous test")
+            return
+            
+        try:
+            message_data = {
+                "sender_name": "Chat User",
+                "conversation_id": self.test_conversation_id
+            }
+            
+            response = self.make_request("POST", "/notifications/quick/message-received", message_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Quick Notification - Message Received", True, f"Message notification sent: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Quick Notification - Message Received", False, f"Failed to send message notification: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Quick Notification - Message Received", False, f"Error: {str(e)}")
+    
+    # ===== RECOMMENDATION SYSTEM TESTS =====
+    
+    def test_get_user_recommendations(self):
+        """Test getting user recommendations with filtering (GET /api/recommendations/)"""
+        if not self.auth_token:
+            self.log_test("Get User Recommendations", False, "No auth token available")
+            return
+            
+        try:
+            # Test 1: Get all recommendations
+            response1 = self.make_request("GET", "/recommendations/")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                self.log_test("Get User Recommendations - All", True, f"Retrieved {len(data1)} recommendations", {"recommendation_count": len(data1)})
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Get User Recommendations - All", False, f"Failed to get recommendations: {error_detail}")
+            
+            # Test 2: Get recommendations with type filter
+            response2 = self.make_request("GET", "/recommendations/", params={"recommendation_types": "skill_learning,user_match"})
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                self.log_test("Get User Recommendations - Type Filter", True, f"Retrieved {len(data2)} filtered recommendations", {"filtered_count": len(data2)})
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Get User Recommendations - Type Filter", False, f"Failed to get filtered recommendations: {error_detail}")
+            
+            # Test 3: Get high confidence recommendations
+            response3 = self.make_request("GET", "/recommendations/", params={"min_confidence": 0.7})
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                self.log_test("Get User Recommendations - High Confidence", True, f"Retrieved {len(data3)} high confidence recommendations", {"high_confidence_count": len(data3)})
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Get User Recommendations - High Confidence", False, f"Failed to get high confidence recommendations: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get User Recommendations", False, f"Error: {str(e)}")
+    
+    def test_generate_all_recommendations(self):
+        """Test generating fresh AI-powered recommendations (POST /api/recommendations/generate)"""
+        if not self.auth_token:
+            self.log_test("Generate All Recommendations", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("POST", "/recommendations/generate")
+            
+            if response.status_code == 200:
+                data = response.json()
+                total_generated = data.get("message", "").split()[1] if "Generated" in data.get("message", "") else "0"
+                recommendations_by_type = data.get("recommendations_by_type", {})
+                self.log_test("Generate All Recommendations", True, f"Generated {total_generated} recommendations across {len(recommendations_by_type)} types", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Generate All Recommendations", False, f"Failed to generate recommendations: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Generate All Recommendations", False, f"Error: {str(e)}")
+    
+    def test_generate_specific_recommendations(self):
+        """Test generating specific type of recommendations (POST /api/recommendations/generate/{type})"""
+        if not self.auth_token:
+            self.log_test("Generate Specific Recommendations", False, "No auth token available")
+            return
+            
+        try:
+            # Test generating skill learning recommendations
+            response1 = self.make_request("POST", "/recommendations/generate/skill_learning")
+            
+            if response1.status_code == 200:
+                data1 = response1.json()
+                count1 = data1.get("count", 0)
+                self.log_test("Generate Specific Recommendations - Skill Learning", True, f"Generated {count1} skill learning recommendations", data1)
+            else:
+                error_detail = response1.json().get("detail", "Unknown error") if response1.content else f"Status: {response1.status_code}"
+                self.log_test("Generate Specific Recommendations - Skill Learning", False, f"Failed to generate skill learning recommendations: {error_detail}")
+            
+            # Test generating user match recommendations
+            response2 = self.make_request("POST", "/recommendations/generate/user_match")
+            
+            if response2.status_code == 200:
+                data2 = response2.json()
+                count2 = data2.get("count", 0)
+                self.log_test("Generate Specific Recommendations - User Match", True, f"Generated {count2} user match recommendations", data2)
+            else:
+                error_detail = response2.json().get("detail", "Unknown error") if response2.content else f"Status: {response2.status_code}"
+                self.log_test("Generate Specific Recommendations - User Match", False, f"Failed to generate user match recommendations: {error_detail}")
+            
+            # Test generating learning path recommendations
+            response3 = self.make_request("POST", "/recommendations/generate/learning_path")
+            
+            if response3.status_code == 200:
+                data3 = response3.json()
+                count3 = data3.get("count", 0)
+                self.log_test("Generate Specific Recommendations - Learning Path", True, f"Generated {count3} learning path recommendations", data3)
+            else:
+                error_detail = response3.json().get("detail", "Unknown error") if response3.content else f"Status: {response3.status_code}"
+                self.log_test("Generate Specific Recommendations - Learning Path", False, f"Failed to generate learning path recommendations: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Generate Specific Recommendations", False, f"Error: {str(e)}")
+    
+    def test_mark_recommendation_viewed(self):
+        """Test marking recommendation as viewed (PUT /api/recommendations/{id}/viewed)"""
+        if not self.auth_token:
+            self.log_test("Mark Recommendation Viewed", False, "No auth token available")
+            return
+            
+        try:
+            # First get recommendations to find one to mark as viewed
+            recommendations_response = self.make_request("GET", "/recommendations/")
+            if recommendations_response.status_code != 200:
+                self.log_test("Mark Recommendation Viewed", False, "Could not retrieve recommendations")
+                return
+                
+            recommendations = recommendations_response.json()
+            if not recommendations:
+                self.log_test("Mark Recommendation Viewed", False, "No recommendations available to mark as viewed")
+                return
+            
+            recommendation_id = recommendations[0]["id"]
+            
+            response = self.make_request("PUT", f"/recommendations/{recommendation_id}/viewed")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Mark Recommendation Viewed", True, f"Recommendation marked as viewed: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Mark Recommendation Viewed", False, f"Failed to mark recommendation as viewed: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Mark Recommendation Viewed", False, f"Error: {str(e)}")
+    
+    def test_mark_recommendation_acted_upon(self):
+        """Test marking recommendation as acted upon (PUT /api/recommendations/{id}/acted-upon)"""
+        if not self.auth_token:
+            self.log_test("Mark Recommendation Acted Upon", False, "No auth token available")
+            return
+            
+        try:
+            # First get recommendations to find one to mark as acted upon
+            recommendations_response = self.make_request("GET", "/recommendations/")
+            if recommendations_response.status_code != 200:
+                self.log_test("Mark Recommendation Acted Upon", False, "Could not retrieve recommendations")
+                return
+                
+            recommendations = recommendations_response.json()
+            if not recommendations:
+                self.log_test("Mark Recommendation Acted Upon", False, "No recommendations available to mark as acted upon")
+                return
+            
+            recommendation_id = recommendations[0]["id"]
+            
+            response = self.make_request("PUT", f"/recommendations/{recommendation_id}/acted-upon")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Mark Recommendation Acted Upon", True, f"Recommendation marked as acted upon: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Mark Recommendation Acted Upon", False, f"Failed to mark recommendation as acted upon: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Mark Recommendation Acted Upon", False, f"Error: {str(e)}")
+    
+    def test_dismiss_recommendation(self):
+        """Test dismissing a recommendation (PUT /api/recommendations/{id}/dismiss)"""
+        if not self.auth_token:
+            self.log_test("Dismiss Recommendation", False, "No auth token available")
+            return
+            
+        try:
+            # First get recommendations to find one to dismiss
+            recommendations_response = self.make_request("GET", "/recommendations/")
+            if recommendations_response.status_code != 200:
+                self.log_test("Dismiss Recommendation", False, "Could not retrieve recommendations")
+                return
+                
+            recommendations = recommendations_response.json()
+            if not recommendations:
+                self.log_test("Dismiss Recommendation", False, "No recommendations available to dismiss")
+                return
+            
+            recommendation_id = recommendations[0]["id"]
+            
+            response = self.make_request("PUT", f"/recommendations/{recommendation_id}/dismiss")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Dismiss Recommendation", True, f"Recommendation dismissed: {data.get('message')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Dismiss Recommendation", False, f"Failed to dismiss recommendation: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Dismiss Recommendation", False, f"Error: {str(e)}")
+    
+    def test_get_learning_goals(self):
+        """Test getting user's learning goals (GET /api/recommendations/learning-goals)"""
+        if not self.auth_token:
+            self.log_test("Get Learning Goals", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/recommendations/learning-goals")
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Get Learning Goals", True, f"Retrieved {len(data)} learning goals", {"goals_count": len(data)})
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Learning Goals", False, f"Failed to get learning goals: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Learning Goals", False, f"Error: {str(e)}")
+    
+    def test_create_learning_goal(self):
+        """Test creating a learning goal (POST /api/recommendations/learning-goals)"""
+        if not self.auth_token:
+            self.log_test("Create Learning Goal", False, "No auth token available")
+            return
+            
+        try:
+            # First get available skills to create a goal for
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("Create Learning Goal", False, "Could not retrieve skills list")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("Create Learning Goal", False, "No skills available")
+                return
+            
+            # Find a skill to create a goal for (preferably one not already in user's skills)
+            target_skill = next((skill for skill in skills if "Machine Learning" in skill.get("name", "")), skills[0])
+            
+            from datetime import datetime, timedelta
+            goal_data = {
+                "skill_id": target_skill["id"],
+                "target_level": "intermediate",
+                "target_date": (datetime.utcnow() + timedelta(days=90)).isoformat(),
+                "weekly_session_target": 2
+            }
+            
+            response = self.make_request("POST", "/recommendations/learning-goals", goal_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.created_learning_goal_id = data.get("id")  # Store for other tests
+                self.log_test("Create Learning Goal", True, f"Learning goal created: {data.get('skill_name')}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Create Learning Goal", False, f"Failed to create learning goal: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Create Learning Goal", False, f"Error: {str(e)}")
+    
+    def test_update_goal_progress(self):
+        """Test updating learning goal progress (PUT /api/recommendations/learning-goals/{id}/progress)"""
+        if not self.auth_token:
+            self.log_test("Update Goal Progress", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_learning_goal_id') or not self.created_learning_goal_id:
+            self.log_test("Update Goal Progress", False, "No learning goal ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("PUT", f"/recommendations/learning-goals/{self.created_learning_goal_id}/progress", params={"progress": 35.5})
+            
+            if response.status_code == 200:
+                data = response.json()
+                progress = data.get("progress", 0)
+                self.log_test("Update Goal Progress", True, f"Goal progress updated to {progress}%", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Update Goal Progress", False, f"Failed to update goal progress: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Update Goal Progress", False, f"Error: {str(e)}")
+    
+    def test_get_recommendation_insights(self):
+        """Test getting recommendation insights (GET /api/recommendations/insights)"""
+        if not self.auth_token:
+            self.log_test("Get Recommendation Insights", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/recommendations/insights")
+            
+            if response.status_code == 200:
+                data = response.json()
+                total_recommendations = data.get("total_recommendations", 0)
+                engagement_rate = data.get("engagement_rate", 0)
+                action_rate = data.get("action_rate", 0)
+                self.log_test("Get Recommendation Insights", True, f"Total: {total_recommendations}, Engagement: {engagement_rate}%, Action: {action_rate}%", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Recommendation Insights", False, f"Failed to get recommendation insights: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Recommendation Insights", False, f"Error: {str(e)}")
+    
+    def test_get_recommendation_dashboard(self):
+        """Test getting recommendation dashboard (GET /api/recommendations/dashboard)"""
+        if not self.auth_token:
+            self.log_test("Get Recommendation Dashboard", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/recommendations/dashboard")
+            
+            if response.status_code == 200:
+                data = response.json()
+                featured_count = len(data.get("recommendations", {}).get("featured", []))
+                total_goals = data.get("learning_goals", {}).get("total_goals", 0)
+                quick_stats = data.get("quick_stats", {})
+                self.log_test("Get Recommendation Dashboard", True, f"Featured: {featured_count}, Goals: {total_goals}, Stats: {quick_stats}", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Recommendation Dashboard", False, f"Failed to get recommendation dashboard: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Recommendation Dashboard", False, f"Error: {str(e)}")
+    
     # ===== MESSAGING SYSTEM TESTS =====
     
     def test_get_user_conversations(self):
