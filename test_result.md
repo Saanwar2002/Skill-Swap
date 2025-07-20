@@ -482,10 +482,11 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Video Chat Integration"
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "frontend_testing"
 
 agent_communication:
   - agent: "main"
