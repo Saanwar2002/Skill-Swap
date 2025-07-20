@@ -176,5 +176,3 @@ class WebRTCService:
 
 # Global WebRTC service instance
 webrtc_service = WebRTCService()
-
-import asyncio
