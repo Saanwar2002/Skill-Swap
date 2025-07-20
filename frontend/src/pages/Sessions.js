@@ -14,9 +14,11 @@ import {
   CheckIcon,
   PlayIcon,
   StopIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  VideoCameraIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import VideoChat from '../components/VideoChat';
 import axios from 'axios';
 
 const Sessions = () => {
