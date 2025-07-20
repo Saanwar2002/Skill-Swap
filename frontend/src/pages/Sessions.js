@@ -223,6 +223,10 @@ const Sessions = () => {
             (isLearner && !session.learner_rating));
   };
 
+  const canJoinVideoCall = (session) => {
+    return session.status === 'in_progress';
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
