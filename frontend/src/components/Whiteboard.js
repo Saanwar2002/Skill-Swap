@@ -149,8 +149,9 @@ const Whiteboard = ({
 
     // Configure eraser mode
     if (selectedTool === 'eraser') {
-      canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
       canvas.freeDrawingBrush.width = brushSize * 2;
+      canvas.freeDrawingBrush.color = '#ffffff'; // White color for erasing effect
       canvas.isDrawingMode = true;
     } else if (selectedTool === 'pen') {
       canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
