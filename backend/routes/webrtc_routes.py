@@ -73,9 +73,14 @@ def create_webrtc_router(db) -> APIRouter:
             
             # Verify user has access to the session
             try:
-                session = await session_service.get_session(session_id, user_id)
+                session = await session_service.get_session(session_id)
                 if not session:
-                    await websocket.close(code=1008, reason="Session not found or access denied")
+                    await websocket.close(code=1008, reason="Session not found")
+                    return
+                
+                # Check if user is participant
+                if session.teacher_id != user_id and session.learner_id != user_id:
+                    await websocket.close(code=1008, reason="Access denied")
                     return
             except Exception as e:
                 logger.error(f"Error verifying session access: {e}")
