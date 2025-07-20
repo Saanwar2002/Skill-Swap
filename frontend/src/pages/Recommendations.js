@@ -15,7 +15,6 @@ import {
   XMarkIcon,
   ChartBarIcon,
   AcademicCapIcon,
-  TargetIcon,
   CalendarIcon
 } from '@heroicons/react/24/outline';
 
