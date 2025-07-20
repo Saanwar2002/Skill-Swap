@@ -509,7 +509,7 @@ const Recommendations = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {learningGoals.length === 0 ? (
               <div className="col-span-2 text-center py-12">
-                <TargetIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <BookOpenIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500 mb-2">No learning goals yet</p>
                 <button
                   onClick={createLearningGoal}
