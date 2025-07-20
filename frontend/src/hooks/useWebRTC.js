@@ -453,7 +453,10 @@ const useWebRTC = (sessionId) => {
     startCall,
     toggleMute,
     toggleVideo,
-    toggleScreenShare
+    toggleScreenShare,
+    // Whiteboard functionality
+    whiteboardEvents,
+    sendWhiteboardEvent
   };
 };
 
