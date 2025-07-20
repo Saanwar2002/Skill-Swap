@@ -360,6 +360,21 @@ const useWebRTC = (sessionId) => {
     }
   }, [isScreenSharing]);
 
+  // Send whiteboard event
+  const sendWhiteboardEvent = useCallback((event) => {
+    if (websocketRef.current && websocketRef.current.readyState === WebSocket.OPEN) {
+      const message = {
+        type: `whiteboard:${event.type}`,
+        data: event.data,
+        timestamp: event.timestamp || Date.now(),
+        user_id: event.userId
+      };
+      
+      websocketRef.current.send(JSON.stringify(message));
+      console.log('Sent whiteboard event:', event.type);
+    }
+  }, []);
+
   // Connect to session
   const connect = useCallback(async () => {
     try {
