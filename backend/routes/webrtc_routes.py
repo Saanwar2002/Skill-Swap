@@ -28,6 +28,19 @@ def create_webrtc_router(db) -> APIRouter:
     auth_service = AuthService(db)
     session_service = SessionService(db)
 
+    async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+        """Get current user from JWT token"""
+        try:
+            token = credentials.credentials
+            user = await auth_service.get_current_user(token)
+            return user.dict()
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            raise HTTPException(
+                status_code=401,
+                detail="Could not validate credentials"
+            )
+
     async def authenticate_websocket_token(token: str) -> str:
         """Authenticate WebSocket connection using JWT token"""
         try:
@@ -116,7 +129,7 @@ def create_webrtc_router(db) -> APIRouter:
                 webrtc_service.connection_manager.disconnect(user_id)
 
     @router.get("/config")
-    async def get_webrtc_config(current_user: dict = Depends(auth_service.get_current_user)):
+    async def get_webrtc_config(current_user: dict = Depends(get_current_user)):
         """Get WebRTC configuration for client"""
         return {
             "ice_servers": webrtc_service.get_ice_servers(),
@@ -126,7 +139,7 @@ def create_webrtc_router(db) -> APIRouter:
     @router.get("/session/{session_id}/info")
     async def get_session_info(
         session_id: str, 
-        current_user: dict = Depends(auth_service.get_current_user)
+        current_user: dict = Depends(get_current_user)
     ):
         """Get information about active WebRTC session"""
         try:
@@ -145,7 +158,7 @@ def create_webrtc_router(db) -> APIRouter:
     @router.post("/session/{session_id}/start-call")
     async def start_video_call(
         session_id: str, 
-        current_user: dict = Depends(auth_service.get_current_user)
+        current_user: dict = Depends(get_current_user)
     ):
         """Start a video call for a session"""
         try:
@@ -181,7 +194,7 @@ def create_webrtc_router(db) -> APIRouter:
     @router.post("/session/{session_id}/end-call")
     async def end_video_call(
         session_id: str, 
-        current_user: dict = Depends(auth_service.get_current_user)
+        current_user: dict = Depends(get_current_user)
     ):
         """End a video call for a session"""
         try:
