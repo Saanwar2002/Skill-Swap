@@ -462,7 +462,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Community Features Frontend"
+    - "Community Features Frontend Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
