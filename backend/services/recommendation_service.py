@@ -264,8 +264,8 @@ class RecommendationService:
         recommendations = []
         
         # Get user's skill interests
-        user_skills = [skill["skill_name"].lower() for skill in user.get("skills_offered", [])]
-        user_interests = [skill["skill_name"].lower() for skill in user.get("skills_wanted", [])]
+        user_skills = [skill.lower() for skill in user.get("skills_offered", [])]
+        user_interests = [skill.lower() for skill in user.get("skills_wanted", [])]
         all_interests = set(user_skills + user_interests)
         
         # Find relevant community posts
