@@ -566,6 +566,15 @@ const Sessions = () => {
           </div>
         </div>
       )}
+
+      {/* Video Chat Modal */}
+      {showVideoChat && selectedSession && (
+        <VideoChat
+          sessionId={selectedSession.id}
+          sessionDetails={selectedSession}
+          onClose={handleEndVideoCall}
+        />
+      )}
     </div>
   );
 };
