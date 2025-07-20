@@ -903,3 +903,215 @@ class PostResponse(BaseModel):
     
     created_at: datetime
     updated_at: datetime
+
+
+# Notification System Models
+class NotificationType(str, Enum):
+    MATCH_FOUND = "match_found"
+    SESSION_REMINDER = "session_reminder"
+    SESSION_STARTED = "session_started"
+    SESSION_COMPLETED = "session_completed"
+    MESSAGE_RECEIVED = "message_received"
+    ACHIEVEMENT_EARNED = "achievement_earned"
+    BADGE_EARNED = "badge_earned"
+    SKILL_ENDORSED = "skill_endorsed"
+    COMMUNITY_POST_LIKE = "community_post_like"
+    COMMUNITY_POST_COMMENT = "community_post_comment"
+    GROUP_INVITATION = "group_invitation"
+    RECOMMENDATION_AVAILABLE = "recommendation_available"
+    SYSTEM_ANNOUNCEMENT = "system_announcement"
+
+
+class NotificationPriority(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class Notification(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    notification_type: NotificationType
+    title: str
+    message: str
+    priority: NotificationPriority = NotificationPriority.MEDIUM
+    data: Dict[str, Any] = {}  # Additional contextual data
+    is_read: bool = False
+    is_sent_via_email: bool = False
+    scheduled_for: Optional[datetime] = None  # For scheduled notifications
+    expires_at: Optional[datetime] = None  # Auto-delete after this time
+    action_url: Optional[str] = None  # Deep link for notification action
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    read_at: Optional[datetime] = None
+
+
+class NotificationPreferences(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    email_notifications: bool = True
+    push_notifications: bool = True
+    sms_notifications: bool = False
+    
+    # Specific notification types
+    match_notifications: bool = True
+    session_reminders: bool = True
+    message_notifications: bool = True
+    achievement_notifications: bool = True
+    community_notifications: bool = True
+    system_announcements: bool = True
+    
+    # Frequency settings
+    digest_frequency: str = "daily"  # "never", "daily", "weekly"
+    quiet_hours_start: Optional[str] = "22:00"  # 24h format
+    quiet_hours_end: Optional[str] = "08:00"
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class RecommendationType(str, Enum):
+    SKILL_LEARNING = "skill_learning"
+    SKILL_TEACHING = "skill_teaching"
+    USER_MATCH = "user_match"
+    SESSION_TIMING = "session_timing"
+    COMMUNITY_CONTENT = "community_content"
+    LEARNING_PATH = "learning_path"
+    GOAL_SUGGESTION = "goal_suggestion"
+
+
+class Recommendation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    recommendation_type: RecommendationType
+    title: str
+    description: str
+    confidence_score: float = Field(ge=0.0, le=1.0)  # AI confidence in recommendation
+    data: Dict[str, Any] = {}  # Recommendation specific data
+    is_viewed: bool = False
+    is_dismissed: bool = False
+    is_acted_upon: bool = False
+    expires_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    viewed_at: Optional[datetime] = None
+    acted_at: Optional[datetime] = None
+
+
+class LearningGoal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    skill_id: str
+    skill_name: str
+    target_level: SkillLevel
+    current_progress: float = 0.0  # 0.0 to 100.0
+    target_date: Optional[datetime] = None
+    weekly_session_target: int = 2  # Sessions per week
+    is_active: bool = True
+    milestones: List[Dict[str, Any]] = []  # Progress milestones
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
+
+
+class UserAnalytics(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    period: str  # "daily", "weekly", "monthly"
+    period_start: datetime
+    period_end: datetime
+    
+    # Learning metrics
+    sessions_attended: int = 0
+    sessions_taught: int = 0
+    hours_learned: float = 0.0
+    hours_taught: float = 0.0
+    skills_improved: List[str] = []
+    new_connections: int = 0
+    
+    # Engagement metrics
+    login_days: int = 0
+    messages_sent: int = 0
+    community_posts: int = 0
+    community_comments: int = 0
+    
+    # Achievement metrics
+    badges_earned: int = 0
+    achievements_unlocked: int = 0
+    skill_coins_earned: int = 0
+    
+    # Calculated scores
+    engagement_score: float = 0.0
+    learning_velocity: float = 0.0
+    teaching_impact: float = 0.0
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# Request/Response Models for Notifications
+class NotificationCreate(BaseModel):
+    user_id: str
+    notification_type: NotificationType
+    title: str
+    message: str
+    priority: NotificationPriority = NotificationPriority.MEDIUM
+    data: Dict[str, Any] = {}
+    scheduled_for: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    action_url: Optional[str] = None
+
+
+class NotificationResponse(BaseModel):
+    id: str
+    notification_type: NotificationType
+    title: str
+    message: str
+    priority: NotificationPriority
+    data: Dict[str, Any]
+    is_read: bool
+    action_url: Optional[str]
+    created_at: datetime
+    time_ago: str  # Human readable time ago
+
+
+class NotificationUpdate(BaseModel):
+    is_read: Optional[bool] = None
+    is_dismissed: Optional[bool] = None
+
+
+class RecommendationCreate(BaseModel):
+    user_id: str
+    recommendation_type: RecommendationType
+    title: str
+    description: str
+    confidence_score: float = Field(ge=0.0, le=1.0)
+    data: Dict[str, Any] = {}
+    expires_at: Optional[datetime] = None
+
+
+class RecommendationResponse(BaseModel):
+    id: str
+    recommendation_type: RecommendationType
+    title: str
+    description: str
+    confidence_score: float
+    data: Dict[str, Any]
+    is_viewed: bool
+    is_dismissed: bool
+    is_acted_upon: bool
+    created_at: datetime
+    time_ago: str
+
+
+class LearningGoalCreate(BaseModel):
+    skill_id: str
+    target_level: SkillLevel
+    target_date: Optional[datetime] = None
+    weekly_session_target: int = 2
+
+
+class LearningGoalUpdate(BaseModel):
+    target_level: Optional[SkillLevel] = None
+    target_date: Optional[datetime] = None
+    weekly_session_target: Optional[int] = None
+    current_progress: Optional[float] = None
+    is_active: Optional[bool] = None
