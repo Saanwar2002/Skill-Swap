@@ -35,6 +35,7 @@ const Sessions = () => {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showVideoChat, setShowVideoChat] = useState(false);
   const [feedback, setFeedback] = useState({ rating: 5, comment: '' });
 
   const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
