@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import {
   PencilIcon,
   PaintBrushIcon,
@@ -13,7 +14,8 @@ import {
   PhotoIcon,
   ChatBubbleBottomCenterTextIcon,
   EyeSlashIcon,
-  EyeIcon
+  EyeIcon,
+  CloudIcon
 } from '@heroicons/react/24/outline';
 
 const Whiteboard = ({ 
