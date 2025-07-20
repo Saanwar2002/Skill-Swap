@@ -134,6 +134,33 @@ const Sessions = () => {
     }
   };
 
+  const handleJoinVideoCall = async (session) => {
+    try {
+      // Start the video call on the backend
+      await axios.post(`${API_BASE}/api/webrtc/session/${session.id}/start-call`);
+      
+      // Set the session and show video chat
+      setSelectedSession(session);
+      setShowVideoChat(true);
+    } catch (err) {
+      console.error('Error starting video call:', err);
+      alert('Failed to start video call. Make sure the session is in progress.');
+    }
+  };
+
+  const handleEndVideoCall = async () => {
+    try {
+      if (selectedSession) {
+        await axios.post(`${API_BASE}/api/webrtc/session/${selectedSession.id}/end-call`);
+      }
+    } catch (err) {
+      console.error('Error ending video call:', err);
+    } finally {
+      setShowVideoChat(false);
+      setSelectedSession(null);
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
