@@ -33,6 +33,10 @@ const Whiteboard = ({
   const [isDrawing, setIsDrawing] = useState(false);
   const [canvasHistory, setCanvasHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+
+  const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
   // Tool configurations
   const tools = {
