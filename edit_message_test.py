@@ -8,7 +8,7 @@ import json
 import time
 
 # Configuration
-BASE_URL = "https://2ef2ea37-b473-4345-a08f-af5732198b4c.preview.emergentagent.com/api"
+BASE_URL = "https://b8a1342a-1e13-48ac-8b12-2872f4ae2d92.preview.emergentagent.com/api"
 TIMEOUT = 30
 
 def test_edit_message():
