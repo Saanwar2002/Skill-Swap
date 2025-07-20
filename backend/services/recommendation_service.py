@@ -466,12 +466,18 @@ class RecommendationService:
         goals = []
         
         # Goals from skills_wanted
-        for skill in user.get("skills_wanted", [])[:3]:
-            goals.append({
-                "skill_id": skill["skill_id"],
-                "target_skill_id": skill["skill_id"],
-                "confidence": 0.8
-            })
+        skills_wanted = user.get("skills_wanted", [])[:3]
+        if skills_wanted:
+            # Look up skill IDs from skill names
+            skills_cursor = self.skills_collection.find({"name": {"$in": skills_wanted}})
+            skills_docs = await skills_cursor.to_list(length=None)
+            
+            for skill_doc in skills_docs:
+                goals.append({
+                    "skill_id": skill_doc["id"],
+                    "target_skill_id": skill_doc["id"],
+                    "confidence": 0.8
+                })
         
         return goals
     
