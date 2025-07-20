@@ -7,15 +7,18 @@ import {
   SpeakerWaveIcon,
   ExclamationTriangleIcon,
   UserIcon,
-  ClockIcon
+  ClockIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import { 
   MicrophoneIcon as MicrophoneIconSolid,
   VideoCameraIcon as VideoCameraIconSolid,
   ComputerDesktopIcon as ComputerDesktopIconSolid,
-  SpeakerWaveIcon as SpeakerWaveIconSolid
+  SpeakerWaveIcon as SpeakerWaveIconSolid,
+  PencilSquareIcon as PencilSquareIconSolid
 } from '@heroicons/react/24/solid';
 import useWebRTC from '../hooks/useWebRTC';
+import Whiteboard from './Whiteboard';
 
 const VideoChat = ({ sessionId, onClose, sessionDetails }) => {
   const {
