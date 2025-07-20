@@ -150,7 +150,12 @@ const useWebRTC = (sessionId) => {
           break;
           
         default:
-          console.log('Unknown message type:', message.type);
+          // Handle whiteboard events
+          if (message.type?.startsWith('whiteboard:')) {
+            setWhiteboardEvents(prev => [...prev, message]);
+          } else {
+            console.log('Unknown message type:', message.type);
+          }
       }
     };
     
