@@ -19,6 +19,7 @@ from routes.session_routes import create_session_router
 from routes.message_routes import create_message_router
 from routes.gamification_routes import create_gamification_router
 from routes.community_routes import create_community_router
+from routes.webrtc_routes import router as webrtc_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
