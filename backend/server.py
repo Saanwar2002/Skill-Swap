@@ -20,6 +20,8 @@ from routes.message_routes import create_message_router
 from routes.gamification_routes import create_gamification_router
 from routes.community_routes import create_community_router
 from routes.webrtc_routes import create_webrtc_router
+from routes import notification_routes
+from routes import recommendation_routes
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
