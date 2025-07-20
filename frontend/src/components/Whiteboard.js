@@ -528,6 +528,18 @@ const Whiteboard = ({
               <TrashIcon className="h-4 w-4" />
             </button>
             <button
+              onClick={saveWhiteboardData}
+              disabled={isLoading}
+              className="p-2 rounded hover:bg-blue-100 text-blue-600 disabled:opacity-50"
+              title="Save Whiteboard"
+            >
+              {isLoading ? (
+                <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              ) : (
+                <CloudIcon className="h-4 w-4" />
+              )}
+            </button>
+            <button
               onClick={clearCanvas}
               className="px-3 py-1 rounded bg-red-100 hover:bg-red-200 text-red-600 text-sm"
               title="Clear Canvas"
