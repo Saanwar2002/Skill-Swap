@@ -2557,6 +2557,333 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("Community Authentication Required", False, f"Error: {str(e)}")
     
+    # ===== WEBRTC VIDEO CHAT TESTS =====
+    
+    def test_get_webrtc_config(self):
+        """Test getting WebRTC configuration (GET /api/webrtc/config)"""
+        if not self.auth_token:
+            self.log_test("Get WebRTC Config", False, "No auth token available")
+            return
+            
+        try:
+            response = self.make_request("GET", "/webrtc/config")
+            
+            if response.status_code == 200:
+                data = response.json()
+                ice_servers = data.get("ice_servers", [])
+                user_id = data.get("user_id")
+                
+                # Validate ICE servers structure
+                has_stun = any("stun:" in server.get("urls", "") for server in ice_servers)
+                
+                self.log_test("Get WebRTC Config", True, f"Retrieved WebRTC config with {len(ice_servers)} ICE servers, STUN available: {has_stun}", {
+                    "ice_servers_count": len(ice_servers),
+                    "has_stun": has_stun,
+                    "user_id": user_id,
+                    "sample_ice_servers": ice_servers[:2] if ice_servers else []
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get WebRTC Config", False, f"Failed to get WebRTC config: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get WebRTC Config", False, f"Error: {str(e)}")
+    
+    def test_get_session_info_for_webrtc(self):
+        """Test getting session info for WebRTC (GET /api/webrtc/session/{session_id}/info)"""
+        if not self.auth_token:
+            self.log_test("Get Session Info for WebRTC", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Get Session Info for WebRTC", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/info")
+            
+            if response.status_code == 200:
+                data = response.json()
+                session_id = data.get("session_id")
+                active_users = data.get("active_users", [])
+                user_count = data.get("user_count", 0)
+                timestamp = data.get("timestamp")
+                
+                self.log_test("Get Session Info for WebRTC", True, f"Retrieved WebRTC session info: {user_count} active users", {
+                    "session_id": session_id,
+                    "active_users": active_users,
+                    "user_count": user_count,
+                    "timestamp": timestamp
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Session Info for WebRTC", False, f"Failed to get session info: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Session Info for WebRTC", False, f"Error: {str(e)}")
+    
+    def test_start_video_call(self):
+        """Test starting a video call (POST /api/webrtc/session/{session_id}/start-call)"""
+        if not self.auth_token:
+            self.log_test("Start Video Call", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Start Video Call", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # First ensure the session is in progress (required for video calls)
+            start_session_response = self.make_request("POST", f"/sessions/{self.created_session_id}/start")
+            if start_session_response.status_code != 200:
+                self.log_test("Start Video Call", False, "Could not start session (required for video call)")
+                return
+            
+            # Now try to start the video call
+            response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/start-call")
+            
+            if response.status_code == 200:
+                data = response.json()
+                message = data.get("message")
+                session_id = data.get("session_id")
+                websocket_url = data.get("websocket_url")
+                
+                self.log_test("Start Video Call", True, f"Video call started: {message}", {
+                    "message": message,
+                    "session_id": session_id,
+                    "websocket_url": websocket_url
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Start Video Call", False, f"Failed to start video call: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Start Video Call", False, f"Error: {str(e)}")
+    
+    def test_end_video_call(self):
+        """Test ending a video call (POST /api/webrtc/session/{session_id}/end-call)"""
+        if not self.auth_token:
+            self.log_test("End Video Call", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("End Video Call", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/end-call")
+            
+            if response.status_code == 200:
+                data = response.json()
+                message = data.get("message")
+                session_id = data.get("session_id")
+                
+                self.log_test("End Video Call", True, f"Video call ended: {message}", {
+                    "message": message,
+                    "session_id": session_id
+                })
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("End Video Call", False, f"Failed to end video call: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("End Video Call", False, f"Error: {str(e)}")
+    
+    def test_webrtc_session_access_control(self):
+        """Test that WebRTC endpoints require proper session access"""
+        if not self.auth_token:
+            self.log_test("WebRTC Session Access Control", False, "No auth token available")
+            return
+            
+        try:
+            # Create a third user who shouldn't have access to our sessions
+            timestamp = int(time.time())
+            unauthorized_user_data = {
+                "email": f"webrtcunauth{timestamp}@skillswap.com",
+                "username": f"webrtcunauth{timestamp}",
+                "password": "WebRTCUnauth123!",
+                "first_name": "WebRTC",
+                "last_name": "Unauthorized",
+                "role": "both"
+            }
+            
+            unauthorized_response = self.make_request("POST", "/auth/register", unauthorized_user_data)
+            if unauthorized_response.status_code != 200:
+                self.log_test("WebRTC Session Access Control", False, "Could not create unauthorized user")
+                return
+            
+            unauthorized_token = unauthorized_response.json().get("access_token")
+            
+            # Try to access WebRTC session info with unauthorized token
+            if hasattr(self, 'created_session_id') and self.created_session_id:
+                # Temporarily switch to unauthorized token
+                original_token = self.auth_token
+                self.auth_token = unauthorized_token
+                
+                response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/info")
+                
+                # Restore original token
+                self.auth_token = original_token
+                
+                if response.status_code in [403, 404]:
+                    self.log_test("WebRTC Session Access Control", True, f"Unauthorized access correctly blocked ({response.status_code})")
+                else:
+                    self.log_test("WebRTC Session Access Control", False, f"Unauthorized access not blocked - Status: {response.status_code}")
+            else:
+                self.log_test("WebRTC Session Access Control", False, "No session available to test access control")
+                
+        except Exception as e:
+            self.log_test("WebRTC Session Access Control", False, f"Error: {str(e)}")
+    
+    def test_webrtc_authentication_required(self):
+        """Test that WebRTC endpoints require authentication"""
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Try to access WebRTC endpoints without authentication
+            endpoints_to_test = [
+                "/webrtc/config"
+            ]
+            
+            auth_required_count = 0
+            for endpoint in endpoints_to_test:
+                response = self.make_request("GET", endpoint)
+                if response.status_code in [401, 403]:
+                    auth_required_count += 1
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            if auth_required_count == len(endpoints_to_test):
+                self.log_test("WebRTC Authentication Required", True, f"Authentication correctly required for all {len(endpoints_to_test)} WebRTC endpoints")
+            else:
+                self.log_test("WebRTC Authentication Required", False, f"Authentication not required for {len(endpoints_to_test) - auth_required_count} WebRTC endpoints")
+                
+        except Exception as e:
+            self.log_test("WebRTC Authentication Required", False, f"Error: {str(e)}")
+    
+    def test_webrtc_invalid_session_handling(self):
+        """Test WebRTC endpoints with invalid session IDs"""
+        if not self.auth_token:
+            self.log_test("WebRTC Invalid Session Handling", False, "No auth token available")
+            return
+            
+        try:
+            # Test with non-existent session ID
+            fake_session_id = "00000000-0000-0000-0000-000000000000"
+            
+            # Test session info endpoint
+            response1 = self.make_request("GET", f"/webrtc/session/{fake_session_id}/info")
+            
+            # Test start call endpoint
+            response2 = self.make_request("POST", f"/webrtc/session/{fake_session_id}/start-call")
+            
+            # Test end call endpoint
+            response3 = self.make_request("POST", f"/webrtc/session/{fake_session_id}/end-call")
+            
+            # All should return 404 or 403 for non-existent sessions
+            invalid_responses = 0
+            for response in [response1, response2, response3]:
+                if response.status_code in [404, 403]:
+                    invalid_responses += 1
+            
+            if invalid_responses == 3:
+                self.log_test("WebRTC Invalid Session Handling", True, "All WebRTC endpoints correctly handle invalid session IDs")
+            else:
+                self.log_test("WebRTC Invalid Session Handling", False, f"Only {invalid_responses}/3 endpoints properly handle invalid session IDs")
+                
+        except Exception as e:
+            self.log_test("WebRTC Invalid Session Handling", False, f"Error: {str(e)}")
+    
+    def test_webrtc_session_status_validation(self):
+        """Test that video calls can only be started for sessions in progress"""
+        if not self.auth_token:
+            self.log_test("WebRTC Session Status Validation", False, "No auth token available")
+            return
+            
+        try:
+            # Create a new session that's not started yet
+            skills_response = self.make_request("GET", "/skills/")
+            if skills_response.status_code != 200:
+                self.log_test("WebRTC Session Status Validation", False, "Could not retrieve skills list")
+                return
+                
+            skills = skills_response.json()
+            if not skills:
+                self.log_test("WebRTC Session Status Validation", False, "No skills available")
+                return
+            
+            user_response = self.make_request("GET", "/auth/me")
+            if user_response.status_code != 200:
+                self.log_test("WebRTC Session Status Validation", False, "Could not get current user")
+                return
+            
+            current_user = user_response.json()
+            
+            # Create a learner for this test
+            timestamp = int(time.time())
+            learner_data = {
+                "email": f"webrtclearner{timestamp}@skillswap.com",
+                "username": f"webrtclearner{timestamp}",
+                "password": "WebRTCLearner123!",
+                "first_name": "WebRTC",
+                "last_name": "Learner",
+                "role": "learner"
+            }
+            
+            learner_response = self.make_request("POST", "/auth/register", learner_data)
+            if learner_response.status_code != 200:
+                self.log_test("WebRTC Session Status Validation", False, "Could not create learner user")
+                return
+            
+            learner_user = learner_response.json().get("user", {})
+            
+            # Create session (will be in 'scheduled' status)
+            from datetime import datetime, timedelta
+            start_time = datetime.utcnow() + timedelta(days=1)
+            end_time = start_time + timedelta(hours=1)
+            
+            test_skill = skills[0]
+            
+            session_data = {
+                "teacher_id": current_user["id"],
+                "learner_id": learner_user["id"],
+                "skill_id": test_skill["id"],
+                "skill_name": test_skill["name"],
+                "title": "WebRTC Status Test Session",
+                "description": "Testing WebRTC session status validation",
+                "scheduled_start": start_time.isoformat(),
+                "scheduled_end": end_time.isoformat(),
+                "timezone": "UTC",
+                "session_type": "video",
+                "skill_coins_paid": 10
+            }
+            
+            create_response = self.make_request("POST", "/sessions/", session_data)
+            if create_response.status_code != 200:
+                self.log_test("WebRTC Session Status Validation", False, "Could not create test session")
+                return
+            
+            created_session = create_response.json()
+            test_session_id = created_session["id"]
+            
+            # Try to start video call on scheduled session (should fail)
+            response = self.make_request("POST", f"/webrtc/session/{test_session_id}/start-call")
+            
+            if response.status_code == 400:
+                error_detail = response.json().get("detail", "")
+                if "in progress" in error_detail.lower():
+                    self.log_test("WebRTC Session Status Validation", True, "Video call correctly rejected for non-in-progress session")
+                else:
+                    self.log_test("WebRTC Session Status Validation", False, f"Wrong error message: {error_detail}")
+            else:
+                self.log_test("WebRTC Session Status Validation", False, f"Expected 400 error, got {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("WebRTC Session Status Validation", False, f"Error: {str(e)}")
+    
     
     def run_all_tests(self):
         """Run all backend tests"""
