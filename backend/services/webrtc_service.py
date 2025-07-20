@@ -139,6 +139,12 @@ class WebRTCService:
     async def handle_signaling_message(self, websocket: WebSocket, user_id: str, message: dict):
         """Handle WebRTC signaling messages"""
         message_type = message.get("type")
+        
+        # Handle whiteboard events (broadcast to all users in session)
+        if message_type.startswith("whiteboard:"):
+            await self.handle_whiteboard_message(websocket, user_id, message)
+            return
+        
         target_user_id = message.get("target_user_id")
         
         if not target_user_id:
@@ -162,6 +168,34 @@ class WebRTCService:
         )
         
         logger.debug(f"Forwarded {message_type} from {user_id} to {target_user_id}")
+    
+    async def handle_whiteboard_message(self, websocket: WebSocket, user_id: str, message: dict):
+        """Handle whiteboard events and broadcast to all session participants"""
+        session_id = self.connection_manager.user_sessions.get(user_id)
+        if not session_id:
+            await websocket.send_text(json.dumps({
+                "type": "error",
+                "message": "User not in a session"
+            }))
+            return
+        
+        # Create whiteboard event message
+        whiteboard_event = {
+            "type": message.get("type"),
+            "data": message.get("data"),
+            "user_id": user_id,
+            "timestamp": datetime.utcnow().isoformat(),
+            "session_id": session_id
+        }
+        
+        # Broadcast to all users in the session except sender
+        await self.connection_manager.broadcast_to_session(
+            session_id, 
+            whiteboard_event, 
+            exclude_user=user_id
+        )
+        
+        logger.debug(f"Broadcasted whiteboard event {message.get('type')} from {user_id} to session {session_id}")
     
     async def get_session_info(self, session_id: str) -> dict:
         """Get information about active session"""
