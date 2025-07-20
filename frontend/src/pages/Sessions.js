@@ -442,6 +442,16 @@ const Sessions = () => {
                     </button>
                   )}
                   
+                  {canJoinVideoCall(session) && (
+                    <button
+                      onClick={() => handleJoinVideoCall(session)}
+                      className="text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                    >
+                      <VideoCameraIcon className="h-4 w-4" />
+                      <span>Join Call</span>
+                    </button>
+                  )}
+                  
                   {canEndSession(session) && (
                     <button
                       onClick={() => handleSessionAction(session.id, 'end')}
