@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 # Configuration
-BASE_URL = "https://c3224408-d3c9-46ab-9061-d39c2b93b3d1.preview.emergentagent.com/api"
+BASE_URL = "https://ba701a29-f4d7-4c01-9df6-fffdcf88de3f.preview.emergentagent.com/api"
 TIMEOUT = 30
 
 class SkillSwapTester:
