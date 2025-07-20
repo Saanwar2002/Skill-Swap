@@ -78,6 +78,7 @@ api_router.include_router(create_session_router(db))
 api_router.include_router(create_message_router(db))
 api_router.include_router(create_gamification_router(db))
 api_router.include_router(create_community_router(db))
+api_router.include_router(webrtc_router)
 
 # Include the main router in the app
 app.include_router(api_router)
