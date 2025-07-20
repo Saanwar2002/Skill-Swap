@@ -3041,6 +3041,7 @@ class SkillSwapTester:
         print("  • Real-time Messaging System")
         print("  • Gamification System")
         print("  • Community Features System")
+        print("  • WebRTC Video Chat System")
         print("  • Search and Discovery")
         print("  • Analytics and Statistics")
         
