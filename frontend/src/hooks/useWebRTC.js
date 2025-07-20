@@ -13,6 +13,9 @@ const useWebRTC = (sessionId) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  
+  // Whiteboard state
+  const [whiteboardEvents, setWhiteboardEvents] = useState([]);
 
   const peerConnectionRef = useRef(null);
   const websocketRef = useRef(null);
