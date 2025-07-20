@@ -49,6 +49,56 @@ const Whiteboard = ({
     select: { cursor: 'default', mode: 'selection' }
   };
 
+  // Load whiteboard data from server
+  const loadWhiteboardData = useCallback(async () => {
+    if (!sessionId) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE}/api/webrtc/session/${sessionId}/whiteboard`);
+      const { whiteboard_data } = response.data;
+      
+      if (whiteboard_data && Object.keys(whiteboard_data).length > 0 && fabricCanvasRef.current) {
+        fabricCanvasRef.current.loadFromJSON(whiteboard_data, () => {
+          fabricCanvasRef.current.renderAll();
+          saveCanvasState();
+        });
+      }
+    } catch (error) {
+      console.error('Error loading whiteboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sessionId, API_BASE]);
+
+  // Save whiteboard data to server
+  const saveWhiteboardData = useCallback(async () => {
+    if (!sessionId || !fabricCanvasRef.current) return;
+    
+    try {
+      const canvasData = fabricCanvasRef.current.toJSON();
+      await axios.post(`${API_BASE}/api/webrtc/session/${sessionId}/whiteboard/save`, canvasData);
+      setLastSaved(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Error saving whiteboard data:', error);
+    }
+  }, [sessionId, API_BASE]);
+
+  // Auto-save every 30 seconds
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const interval = setInterval(saveWhiteboardData, 30000);
+    return () => clearInterval(interval);
+  }, [isVisible, saveWhiteboardData]);
+
+  // Load data when whiteboard becomes visible
+  useEffect(() => {
+    if (isVisible && fabricCanvasRef.current) {
+      loadWhiteboardData();
+    }
+  }, [isVisible, loadWhiteboardData]);
+
   // Initialize Fabric.js canvas
   useEffect(() => {
     if (!canvasRef.current || fabricCanvasRef.current) return;
