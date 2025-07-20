@@ -279,7 +279,7 @@ const Recommendations = () => {
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="bg-green-50 rounded-lg p-3">
-                  <TargetIcon className="h-6 w-6 text-green-600" />
+                  <BookOpenIcon className="h-6 w-6 text-green-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-semibold text-gray-900">
