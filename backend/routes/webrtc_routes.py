@@ -107,6 +107,8 @@ def create_webrtc_router(db) -> APIRouter:
                     
                     if message_type in ["offer", "answer", "ice-candidate"]:
                         await webrtc_service.handle_signaling_message(websocket, user_id, message)
+                    elif message_type.startswith("whiteboard:"):
+                        await webrtc_service.handle_signaling_message(websocket, user_id, message)
                     elif message_type == "heartbeat":
                         await websocket.send_text(json.dumps({"type": "heartbeat-ack"}))
                     else:
