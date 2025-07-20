@@ -58,6 +58,7 @@ class ConnectionManager:
         
         # Notify other users in the session
         if session_id and session_id in self.active_connections:
+            import asyncio
             asyncio.create_task(self.broadcast_to_session(session_id, {
                 "type": "user_left",
                 "user_id": user_id,
