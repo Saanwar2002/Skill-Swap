@@ -4779,6 +4779,17 @@ class SkillSwapTester:
         self.test_webrtc_invalid_session_handling()
         self.test_webrtc_session_status_validation()
         
+        # Whiteboard Integration Tests (NEW FEATURES)
+        print("\n🎨 Testing Whiteboard Integration System...")
+        self.test_save_whiteboard_data()
+        self.test_get_whiteboard_data()
+        self.test_whiteboard_session_access_control()
+        self.test_whiteboard_data_persistence()
+        self.test_whiteboard_empty_session_data()
+        self.test_whiteboard_invalid_session_id()
+        self.test_whiteboard_authentication_required()
+        self.test_whiteboard_large_data_handling()
+        
         # Smart Notifications System Tests (NEW FEATURES)
         print("\n🔔 Testing Smart Notifications System...")
         self.test_get_user_notifications()
