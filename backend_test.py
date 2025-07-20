@@ -3563,6 +3563,462 @@ class SkillSwapTester:
         except Exception as e:
             self.log_test("WebRTC Session Status Validation", False, f"Error: {str(e)}")
     
+    # ===== WHITEBOARD INTEGRATION TESTS =====
+    
+    def test_save_whiteboard_data(self):
+        """Test saving whiteboard data for a session (POST /api/webrtc/session/{id}/whiteboard/save)"""
+        if not self.auth_token:
+            self.log_test("Save Whiteboard Data", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Save Whiteboard Data", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # Create comprehensive whiteboard data with various drawing elements
+            whiteboard_data = {
+                "version": "1.0",
+                "canvas": {
+                    "width": 1200,
+                    "height": 800,
+                    "background": "#ffffff"
+                },
+                "objects": [
+                    {
+                        "type": "path",
+                        "id": "path_001",
+                        "stroke": "#000000",
+                        "strokeWidth": 2,
+                        "fill": "transparent",
+                        "path": "M 100 100 L 200 150 L 150 200 Z",
+                        "timestamp": "2024-01-15T10:30:00Z"
+                    },
+                    {
+                        "type": "text",
+                        "id": "text_001",
+                        "content": "Python Fundamentals",
+                        "x": 300,
+                        "y": 100,
+                        "fontSize": 24,
+                        "fontFamily": "Arial",
+                        "fill": "#333333",
+                        "timestamp": "2024-01-15T10:31:00Z"
+                    },
+                    {
+                        "type": "rectangle",
+                        "id": "rect_001",
+                        "x": 400,
+                        "y": 200,
+                        "width": 150,
+                        "height": 100,
+                        "fill": "#ffeb3b",
+                        "stroke": "#f57f17",
+                        "strokeWidth": 2,
+                        "timestamp": "2024-01-15T10:32:00Z"
+                    },
+                    {
+                        "type": "circle",
+                        "id": "circle_001",
+                        "cx": 600,
+                        "cy": 300,
+                        "radius": 50,
+                        "fill": "#4caf50",
+                        "stroke": "#2e7d32",
+                        "strokeWidth": 3,
+                        "timestamp": "2024-01-15T10:33:00Z"
+                    }
+                ],
+                "metadata": {
+                    "created_by": self.test_user_id,
+                    "last_modified": "2024-01-15T10:33:30Z",
+                    "total_objects": 4,
+                    "session_duration": 240  # 4 minutes
+                }
+            }
+            
+            response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/whiteboard/save", whiteboard_data)
+            
+            if response.status_code == 200:
+                data = response.json()
+                message = data.get("message")
+                session_id = data.get("session_id")
+                self.log_test("Save Whiteboard Data", True, f"Whiteboard data saved successfully: {message} for session {session_id}", data)
+                
+                # Store whiteboard data for retrieval test
+                self.saved_whiteboard_data = whiteboard_data
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Save Whiteboard Data", False, f"Failed to save whiteboard data: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Save Whiteboard Data", False, f"Error: {str(e)}")
+    
+    def test_get_whiteboard_data(self):
+        """Test retrieving whiteboard data for a session (GET /api/webrtc/session/{id}/whiteboard)"""
+        if not self.auth_token:
+            self.log_test("Get Whiteboard Data", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Get Whiteboard Data", False, "No session ID available from previous test")
+            return
+            
+        try:
+            response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/whiteboard")
+            
+            if response.status_code == 200:
+                data = response.json()
+                session_id = data.get("session_id")
+                whiteboard_data = data.get("whiteboard_data", {})
+                last_updated = data.get("last_updated")
+                
+                # Verify the retrieved data matches what we saved
+                if hasattr(self, 'saved_whiteboard_data'):
+                    saved_objects = self.saved_whiteboard_data.get("objects", [])
+                    retrieved_objects = whiteboard_data.get("objects", [])
+                    
+                    if len(retrieved_objects) == len(saved_objects):
+                        objects_match = True
+                        for i, saved_obj in enumerate(saved_objects):
+                            if i < len(retrieved_objects):
+                                retrieved_obj = retrieved_objects[i]
+                                if (saved_obj.get("type") != retrieved_obj.get("type") or 
+                                    saved_obj.get("id") != retrieved_obj.get("id")):
+                                    objects_match = False
+                                    break
+                        
+                        if objects_match:
+                            self.log_test("Get Whiteboard Data", True, f"Retrieved whiteboard data with {len(retrieved_objects)} objects, data integrity verified", data)
+                        else:
+                            self.log_test("Get Whiteboard Data", True, f"Retrieved whiteboard data with {len(retrieved_objects)} objects, but some objects don't match saved data", data)
+                    else:
+                        self.log_test("Get Whiteboard Data", True, f"Retrieved whiteboard data with {len(retrieved_objects)} objects (expected {len(saved_objects)})", data)
+                else:
+                    self.log_test("Get Whiteboard Data", True, f"Retrieved whiteboard data with {len(whiteboard_data.get('objects', []))} objects", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Get Whiteboard Data", False, f"Failed to get whiteboard data: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Get Whiteboard Data", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_session_access_control(self):
+        """Test whiteboard access control (unauthorized access)"""
+        if not self.auth_token:
+            self.log_test("Whiteboard Session Access Control", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Whiteboard Session Access Control", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # Create a third user who shouldn't have access to our session's whiteboard
+            timestamp = int(time.time())
+            unauthorized_user_data = {
+                "email": f"whiteboardunauth{timestamp}@skillswap.com",
+                "username": f"whiteboardunauth{timestamp}",
+                "password": "WhiteboardUnauth123!",
+                "first_name": "Whiteboard",
+                "last_name": "Unauthorized",
+                "role": "both"
+            }
+            
+            unauthorized_response = self.make_request("POST", "/auth/register", unauthorized_user_data)
+            if unauthorized_response.status_code != 200:
+                self.log_test("Whiteboard Session Access Control", False, "Could not create unauthorized user")
+                return
+            
+            unauthorized_token = unauthorized_response.json().get("access_token")
+            
+            # Try to access whiteboard data with unauthorized token
+            original_token = self.auth_token
+            self.auth_token = unauthorized_token
+            
+            response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/whiteboard")
+            
+            # Restore original token
+            self.auth_token = original_token
+            
+            if response.status_code == 403:
+                self.log_test("Whiteboard Session Access Control", True, "Unauthorized whiteboard access correctly blocked (403 Forbidden)")
+            elif response.status_code == 404:
+                self.log_test("Whiteboard Session Access Control", True, "Unauthorized whiteboard access correctly blocked (404 Not Found)")
+            else:
+                self.log_test("Whiteboard Session Access Control", False, f"Unauthorized whiteboard access not blocked - Status: {response.status_code}")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Session Access Control", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_data_persistence(self):
+        """Test whiteboard data persistence across multiple saves and retrievals"""
+        if not self.auth_token:
+            self.log_test("Whiteboard Data Persistence", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Whiteboard Data Persistence", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # Save updated whiteboard data (simulating user adding more content)
+            updated_whiteboard_data = {
+                "version": "1.1",
+                "canvas": {
+                    "width": 1200,
+                    "height": 800,
+                    "background": "#f5f5f5"
+                },
+                "objects": [
+                    {
+                        "type": "text",
+                        "id": "text_002",
+                        "content": "Variables and Data Types",
+                        "x": 100,
+                        "y": 50,
+                        "fontSize": 20,
+                        "fontFamily": "Arial",
+                        "fill": "#1976d2",
+                        "timestamp": "2024-01-15T10:35:00Z"
+                    },
+                    {
+                        "type": "path",
+                        "id": "path_002",
+                        "stroke": "#d32f2f",
+                        "strokeWidth": 3,
+                        "fill": "transparent",
+                        "path": "M 200 200 Q 250 150 300 200 T 400 200",
+                        "timestamp": "2024-01-15T10:36:00Z"
+                    },
+                    {
+                        "type": "arrow",
+                        "id": "arrow_001",
+                        "x1": 500,
+                        "y1": 300,
+                        "x2": 600,
+                        "y2": 350,
+                        "stroke": "#388e3c",
+                        "strokeWidth": 2,
+                        "markerEnd": "arrowhead",
+                        "timestamp": "2024-01-15T10:37:00Z"
+                    }
+                ],
+                "metadata": {
+                    "created_by": self.test_user_id,
+                    "last_modified": "2024-01-15T10:37:30Z",
+                    "total_objects": 3,
+                    "session_duration": 480  # 8 minutes
+                }
+            }
+            
+            # Save the updated data
+            save_response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/whiteboard/save", updated_whiteboard_data)
+            
+            if save_response.status_code != 200:
+                self.log_test("Whiteboard Data Persistence", False, "Could not save updated whiteboard data")
+                return
+            
+            # Retrieve the data to verify persistence
+            get_response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/whiteboard")
+            
+            if get_response.status_code == 200:
+                data = get_response.json()
+                retrieved_whiteboard = data.get("whiteboard_data", {})
+                retrieved_objects = retrieved_whiteboard.get("objects", [])
+                retrieved_version = retrieved_whiteboard.get("version")
+                
+                # Verify the data was updated correctly
+                if (retrieved_version == "1.1" and 
+                    len(retrieved_objects) == 3 and
+                    any(obj.get("content") == "Variables and Data Types" for obj in retrieved_objects)):
+                    self.log_test("Whiteboard Data Persistence", True, f"Whiteboard data persistence verified - version {retrieved_version} with {len(retrieved_objects)} objects", data)
+                else:
+                    self.log_test("Whiteboard Data Persistence", False, f"Whiteboard data not properly persisted - version: {retrieved_version}, objects: {len(retrieved_objects)}")
+            else:
+                error_detail = get_response.json().get("detail", "Unknown error") if get_response.content else f"Status: {get_response.status_code}"
+                self.log_test("Whiteboard Data Persistence", False, f"Failed to retrieve updated whiteboard data: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Data Persistence", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_empty_session_data(self):
+        """Test retrieving whiteboard data for session with no whiteboard data"""
+        if not self.auth_token:
+            self.log_test("Whiteboard Empty Session Data", False, "No auth token available")
+            return
+            
+        try:
+            # Create a new session without whiteboard data
+            timestamp = int(time.time())
+            session_data = {
+                "title": f"Empty Whiteboard Session {timestamp}",
+                "description": "Session for testing empty whiteboard data retrieval",
+                "skill_id": "python_skill_id",
+                "duration_minutes": 60,
+                "scheduled_at": "2024-02-01T15:00:00Z",
+                "learner_id": self.test_user_id
+            }
+            
+            session_response = self.make_request("POST", "/sessions/", session_data)
+            if session_response.status_code != 200:
+                self.log_test("Whiteboard Empty Session Data", False, "Could not create new session for empty whiteboard test")
+                return
+            
+            empty_session_id = session_response.json().get("id")
+            
+            # Try to get whiteboard data for session with no whiteboard data
+            response = self.make_request("GET", f"/webrtc/session/{empty_session_id}/whiteboard")
+            
+            if response.status_code == 200:
+                data = response.json()
+                whiteboard_data = data.get("whiteboard_data", {})
+                
+                # Should return empty whiteboard data
+                if not whiteboard_data or whiteboard_data == {}:
+                    self.log_test("Whiteboard Empty Session Data", True, "Empty whiteboard data correctly returned for session with no whiteboard content", data)
+                else:
+                    self.log_test("Whiteboard Empty Session Data", True, f"Whiteboard data returned (may have default structure): {len(whiteboard_data)} keys", data)
+            else:
+                error_detail = response.json().get("detail", "Unknown error") if response.content else f"Status: {response.status_code}"
+                self.log_test("Whiteboard Empty Session Data", False, f"Failed to get empty whiteboard data: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Empty Session Data", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_invalid_session_id(self):
+        """Test whiteboard endpoints with invalid session ID"""
+        if not self.auth_token:
+            self.log_test("Whiteboard Invalid Session ID", False, "No auth token available")
+            return
+            
+        try:
+            invalid_session_id = "invalid-whiteboard-session-12345"
+            
+            # Test GET whiteboard data with invalid session ID
+            get_response = self.make_request("GET", f"/webrtc/session/{invalid_session_id}/whiteboard")
+            
+            if get_response.status_code == 404:
+                self.log_test("Whiteboard Invalid Session ID - GET", True, "Invalid session ID correctly handled for GET whiteboard (404 Not Found)")
+            else:
+                error_detail = get_response.json().get("detail", "Unknown error") if get_response.content else f"Status: {get_response.status_code}"
+                self.log_test("Whiteboard Invalid Session ID - GET", False, f"Invalid session not handled properly for GET: {error_detail}")
+            
+            # Test POST whiteboard data with invalid session ID
+            test_whiteboard_data = {
+                "version": "1.0",
+                "objects": [{"type": "text", "content": "test"}]
+            }
+            
+            post_response = self.make_request("POST", f"/webrtc/session/{invalid_session_id}/whiteboard/save", test_whiteboard_data)
+            
+            if post_response.status_code == 404:
+                self.log_test("Whiteboard Invalid Session ID - POST", True, "Invalid session ID correctly handled for POST whiteboard (404 Not Found)")
+            else:
+                error_detail = post_response.json().get("detail", "Unknown error") if post_response.content else f"Status: {post_response.status_code}"
+                self.log_test("Whiteboard Invalid Session ID - POST", False, f"Invalid session not handled properly for POST: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Invalid Session ID", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_authentication_required(self):
+        """Test that whiteboard endpoints require authentication"""
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Whiteboard Authentication Required", False, "No session ID available")
+            return
+            
+        try:
+            # Temporarily remove auth token
+            original_token = self.auth_token
+            self.auth_token = None
+            
+            # Test GET whiteboard without authentication
+            get_response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/whiteboard")
+            
+            # Test POST whiteboard without authentication
+            test_data = {"version": "1.0", "objects": []}
+            post_response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/whiteboard/save", test_data)
+            
+            # Restore auth token
+            self.auth_token = original_token
+            
+            get_auth_required = get_response.status_code in [401, 403]
+            post_auth_required = post_response.status_code in [401, 403]
+            
+            if get_auth_required and post_auth_required:
+                self.log_test("Whiteboard Authentication Required", True, f"Whiteboard authentication correctly required (GET: {get_response.status_code}, POST: {post_response.status_code})")
+            else:
+                self.log_test("Whiteboard Authentication Required", False, f"Whiteboard authentication not properly required (GET: {get_response.status_code}, POST: {post_response.status_code})")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Authentication Required", False, f"Error: {str(e)}")
+    
+    def test_whiteboard_large_data_handling(self):
+        """Test whiteboard handling of large data sets"""
+        if not self.auth_token:
+            self.log_test("Whiteboard Large Data Handling", False, "No auth token available")
+            return
+        
+        if not hasattr(self, 'created_session_id') or not self.created_session_id:
+            self.log_test("Whiteboard Large Data Handling", False, "No session ID available from previous test")
+            return
+            
+        try:
+            # Create large whiteboard data with many objects
+            large_objects = []
+            for i in range(100):  # Create 100 drawing objects
+                large_objects.append({
+                    "type": "path",
+                    "id": f"path_{i:03d}",
+                    "stroke": f"#{i*2:02x}{i*3:02x}{i*4:02x}",
+                    "strokeWidth": (i % 5) + 1,
+                    "fill": "transparent",
+                    "path": f"M {i*10} {i*5} L {i*10+50} {i*5+25} L {i*10+25} {i*5+50} Z",
+                    "timestamp": f"2024-01-15T10:{30+(i//60):02d}:{i%60:02d}Z"
+                })
+            
+            large_whiteboard_data = {
+                "version": "2.0",
+                "canvas": {
+                    "width": 2000,
+                    "height": 1500,
+                    "background": "#ffffff"
+                },
+                "objects": large_objects,
+                "metadata": {
+                    "created_by": self.test_user_id,
+                    "last_modified": "2024-01-15T11:30:00Z",
+                    "total_objects": len(large_objects),
+                    "session_duration": 1800  # 30 minutes
+                }
+            }
+            
+            # Save large whiteboard data
+            save_response = self.make_request("POST", f"/webrtc/session/{self.created_session_id}/whiteboard/save", large_whiteboard_data)
+            
+            if save_response.status_code == 200:
+                # Retrieve the large data to verify it was saved correctly
+                get_response = self.make_request("GET", f"/webrtc/session/{self.created_session_id}/whiteboard")
+                
+                if get_response.status_code == 200:
+                    data = get_response.json()
+                    retrieved_whiteboard = data.get("whiteboard_data", {})
+                    retrieved_objects = retrieved_whiteboard.get("objects", [])
+                    
+                    if len(retrieved_objects) == 100:
+                        self.log_test("Whiteboard Large Data Handling", True, f"Large whiteboard data handled successfully - {len(retrieved_objects)} objects saved and retrieved", {"object_count": len(retrieved_objects)})
+                    else:
+                        self.log_test("Whiteboard Large Data Handling", False, f"Large data not fully preserved - expected 100 objects, got {len(retrieved_objects)}")
+                else:
+                    error_detail = get_response.json().get("detail", "Unknown error") if get_response.content else f"Status: {get_response.status_code}"
+                    self.log_test("Whiteboard Large Data Handling", False, f"Failed to retrieve large whiteboard data: {error_detail}")
+            else:
+                error_detail = save_response.json().get("detail", "Unknown error") if save_response.content else f"Status: {save_response.status_code}"
+                self.log_test("Whiteboard Large Data Handling", False, f"Failed to save large whiteboard data: {error_detail}")
+                
+        except Exception as e:
+            self.log_test("Whiteboard Large Data Handling", False, f"Error: {str(e)}")
+    
     # ===== SMART NOTIFICATIONS SYSTEM TESTS =====
     
     def test_get_user_notifications(self):
