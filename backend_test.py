@@ -3008,6 +3008,31 @@ class SkillSwapTester:
         self.test_webrtc_invalid_session_handling()
         self.test_webrtc_session_status_validation()
         
+        # Smart Notifications System Tests (NEW FEATURES)
+        print("\n🔔 Testing Smart Notifications System...")
+        self.test_get_user_notifications()
+        self.test_get_unread_notification_count()
+        self.test_get_notification_stats()
+        self.test_create_notification()
+        self.test_update_notification()
+        self.test_mark_all_notifications_read()
+        self.test_delete_notification()
+        self.test_get_notification_preferences()
+        self.test_update_notification_preferences()
+        self.test_quick_notification_methods()
+        self.test_notifications_authentication_required()
+        
+        # Smart Recommendations System Tests (NEW FEATURES)
+        print("\n🎯 Testing Smart Recommendations System...")
+        self.test_get_user_recommendations()
+        self.test_generate_all_recommendations()
+        self.test_generate_specific_recommendations()
+        self.test_recommendation_interactions()
+        self.test_learning_goals_management()
+        self.test_recommendation_insights()
+        self.test_recommendation_dashboard()
+        self.test_recommendations_authentication_required()
+        
         # Print summary
         self.print_summary()
     
