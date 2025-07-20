@@ -108,8 +108,15 @@ class RecommendationService:
         recommendations = []
         
         # Get user's current skills
-        current_skills = set(skill["skill_name"].lower() for skill in user.get("skills_offered", []))
-        current_skill_ids = set(skill["skill_id"] for skill in user.get("skills_offered", []))
+        current_skills = set(skill.lower() for skill in user.get("skills_offered", []))
+        
+        # Get skill IDs from skill names (we need to look them up)
+        current_skill_ids = set()
+        if current_skills:
+            # Look up skill IDs from skill names
+            skills_cursor = self.skills_collection.find({"name": {"$in": list(current_skills)}})
+            skills_docs = await skills_cursor.to_list(length=None)
+            current_skill_ids = set(skill["id"] for skill in skills_docs)
         
         # Get popular complementary skills
         complementary_skills = await self._get_complementary_skills(current_skill_ids)
