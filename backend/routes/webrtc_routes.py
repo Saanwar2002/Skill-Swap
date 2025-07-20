@@ -245,6 +245,68 @@ def create_webrtc_router(db) -> APIRouter:
             logger.error(f"Error ending video call: {e}")
             raise HTTPException(status_code=500, detail="Failed to end video call")
 
+    @router.post("/session/{session_id}/whiteboard/save")
+    async def save_whiteboard_data(
+        session_id: str,
+        whiteboard_data: dict,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Save whiteboard data for a session"""
+        try:
+            # Verify user has access to the session
+            session = await session_service.get_session(session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Check if user is participant
+            if session.teacher_id != current_user["id"] and session.learner_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="Access denied")
+            
+            # Update session with whiteboard data
+            await session_service.update_session(session_id, {
+                "whiteboard_data": whiteboard_data,
+                "updated_at": datetime.utcnow()
+            })
+            
+            return {
+                "message": "Whiteboard data saved successfully",
+                "session_id": session_id
+            }
+        
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error saving whiteboard data: {e}")
+            raise HTTPException(status_code=500, detail="Failed to save whiteboard data")
+
+    @router.get("/session/{session_id}/whiteboard")
+    async def get_whiteboard_data(
+        session_id: str,
+        current_user: dict = Depends(get_current_user)
+    ):
+        """Get whiteboard data for a session"""
+        try:
+            # Verify user has access to the session
+            session = await session_service.get_session(session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Check if user is participant
+            if session.teacher_id != current_user["id"] and session.learner_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="Access denied")
+            
+            return {
+                "session_id": session_id,
+                "whiteboard_data": session.whiteboard_data or {},
+                "last_updated": session.updated_at
+            }
+        
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting whiteboard data: {e}")
+            raise HTTPException(status_code=500, detail="Failed to get whiteboard data")
+
     return router
 
 
