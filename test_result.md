@@ -409,7 +409,7 @@ frontend:
     file: "components/VideoChat.js, hooks/useWebRTC.js, pages/Sessions.js, routes/webrtc_routes.py, services/webrtc_service.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
