@@ -215,5 +215,5 @@ def create_notification_router(db: AsyncIOMotorDatabase) -> APIRouter:
         )
         
         return {"success": True, "message": "Message notification sent"}
-
+    
     return router
