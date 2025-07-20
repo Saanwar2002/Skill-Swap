@@ -19,7 +19,7 @@ from routes.session_routes import create_session_router
 from routes.message_routes import create_message_router
 from routes.gamification_routes import create_gamification_router
 from routes.community_routes import create_community_router
-from routes.webrtc_routes import router as webrtc_router
+from routes.webrtc_routes import create_webrtc_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -78,7 +78,7 @@ api_router.include_router(create_session_router(db))
 api_router.include_router(create_message_router(db))
 api_router.include_router(create_gamification_router(db))
 api_router.include_router(create_community_router(db))
-api_router.include_router(webrtc_router)
+api_router.include_router(create_webrtc_router(db))
 
 # Include the main router in the app
 app.include_router(api_router)
