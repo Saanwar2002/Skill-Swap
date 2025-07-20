@@ -314,6 +314,15 @@ const VideoChat = ({ sessionId, onClose, sessionDetails }) => {
           )}
         </div>
       </div>
+
+      {/* Whiteboard Component */}
+      <Whiteboard
+        sessionId={sessionId}
+        isVisible={showWhiteboard}
+        onToggleVisibility={() => setShowWhiteboard(false)}
+        onWhiteboardEvent={sendWhiteboardEvent}
+        remoteEvents={whiteboardEvents}
+      />
     </div>
   );
 };
