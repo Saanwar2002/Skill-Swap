@@ -20,8 +20,8 @@ from routes.message_routes import create_message_router
 from routes.gamification_routes import create_gamification_router
 from routes.community_routes import create_community_router
 from routes.webrtc_routes import create_webrtc_router
-from routes import notification_routes
-from routes import recommendation_routes
+from routes.notification_routes import create_notification_router
+from routes.recommendation_routes import create_recommendation_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -81,8 +81,8 @@ api_router.include_router(create_message_router(db))
 api_router.include_router(create_gamification_router(db))
 api_router.include_router(create_community_router(db))
 api_router.include_router(create_webrtc_router(db))
-api_router.include_router(notification_routes.router, prefix="/notifications", tags=["notifications"])
-api_router.include_router(recommendation_routes.router, prefix="/recommendations", tags=["recommendations"])
+api_router.include_router(create_notification_router(db), prefix="/notifications", tags=["notifications"])
+api_router.include_router(create_recommendation_router(db), prefix="/recommendations", tags=["recommendations"])
 
 # Include the main router in the app
 app.include_router(api_router)
