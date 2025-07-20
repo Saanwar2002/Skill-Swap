@@ -39,13 +39,16 @@ const VideoChat = ({ sessionId, onClose, sessionDetails }) => {
     startCall,
     toggleMute,
     toggleVideo,
-    toggleScreenShare
+    toggleScreenShare,
+    whiteboardEvents,
+    sendWhiteboardEvent
   } = useWebRTC(sessionId);
 
   const [callDuration, setCallDuration] = useState(0);
   const [callStartTime, setCallStartTime] = useState(null);
   const [showControls, setShowControls] = useState(true);
   const [fullScreen, setFullScreen] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
 
   // Call duration timer
   useEffect(() => {
