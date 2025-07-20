@@ -15,6 +15,7 @@ import Community from "./pages/Community";
 import Sessions from "./pages/Sessions";
 import Messages from "./pages/Messages";
 import Leaderboard from "./pages/Leaderboard";
+import Recommendations from "./pages/Recommendations";
 
 function App() {
   return (
@@ -99,6 +100,17 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Leaderboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/recommendations"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Recommendations />
                   </Layout>
                 </ProtectedRoute>
               }
