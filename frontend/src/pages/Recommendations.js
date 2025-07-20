@@ -545,7 +545,7 @@ const Recommendations = () => {
                   
                   <div className="text-sm text-gray-600 space-y-1">
                     <div className="flex items-center space-x-2">
-                      <TargetIcon className="h-4 w-4" />
+                      <BookOpenIcon className="h-4 w-4" />
                       <span>Target: {goal.target_level}</span>
                     </div>
                     <div className="flex items-center space-x-2">
