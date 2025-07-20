@@ -144,13 +144,19 @@ def create_webrtc_router(db) -> APIRouter:
         """Get information about active WebRTC session"""
         try:
             # Verify user has access to the session
-            session = await session_service.get_session(session_id, current_user["id"])
+            session = await session_service.get_session(session_id)
             if not session:
-                raise HTTPException(status_code=404, detail="Session not found or access denied")
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Check if user is participant
+            if session.teacher_id != current_user["id"] and session.learner_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="Access denied")
             
             session_info = await webrtc_service.get_session_info(session_id)
             return session_info
         
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error getting session info: {e}")
             raise HTTPException(status_code=500, detail="Failed to get session information")
@@ -163,12 +169,16 @@ def create_webrtc_router(db) -> APIRouter:
         """Start a video call for a session"""
         try:
             # Verify user has access to the session
-            session = await session_service.get_session(session_id, current_user["id"])
+            session = await session_service.get_session(session_id)
             if not session:
-                raise HTTPException(status_code=404, detail="Session not found or access denied")
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Check if user is participant
+            if session.teacher_id != current_user["id"] and session.learner_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="Access denied")
             
             # Check if session is in correct status for video call
-            if session.get("status") != "in_progress":
+            if session.status != "in_progress":
                 raise HTTPException(
                     status_code=400, 
                     detail="Video call can only be started for sessions in progress"
@@ -187,6 +197,8 @@ def create_webrtc_router(db) -> APIRouter:
                 "websocket_url": f"/api/webrtc/ws/{session_id}"
             }
         
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error starting video call: {e}")
             raise HTTPException(status_code=500, detail="Failed to start video call")
@@ -199,9 +211,13 @@ def create_webrtc_router(db) -> APIRouter:
         """End a video call for a session"""
         try:
             # Verify user has access to the session
-            session = await session_service.get_session(session_id, current_user["id"])
+            session = await session_service.get_session(session_id)
             if not session:
-                raise HTTPException(status_code=404, detail="Session not found or access denied")
+                raise HTTPException(status_code=404, detail="Session not found")
+            
+            # Check if user is participant
+            if session.teacher_id != current_user["id"] and session.learner_id != current_user["id"]:
+                raise HTTPException(status_code=403, detail="Access denied")
             
             # Notify all users in the session about the call end
             await webrtc_service.connection_manager.broadcast_to_session(session_id, {
@@ -215,6 +231,8 @@ def create_webrtc_router(db) -> APIRouter:
                 "session_id": session_id
             }
         
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error ending video call: {e}")
             raise HTTPException(status_code=500, detail="Failed to end video call")
