@@ -157,6 +157,9 @@ class Session(BaseModel):
     homework_assigned: Optional[str] = None
     homework_completed: bool = False
     
+    # Whiteboard data
+    whiteboard_data: Optional[Dict[str, Any]] = None
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
