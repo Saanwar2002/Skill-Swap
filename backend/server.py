@@ -81,6 +81,8 @@ api_router.include_router(create_message_router(db))
 api_router.include_router(create_gamification_router(db))
 api_router.include_router(create_community_router(db))
 api_router.include_router(create_webrtc_router(db))
+api_router.include_router(notification_routes.router, prefix="/notifications", tags=["notifications"])
+api_router.include_router(recommendation_routes.router, prefix="/recommendations", tags=["recommendations"])
 
 # Include the main router in the app
 app.include_router(api_router)
