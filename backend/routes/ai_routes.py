@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List, Optional
 from datetime import datetime
 
-from ..auth import get_current_user
-from ..models import (
+from auth import get_current_user
+from models import (
     User, AIConversationType, AIMessageCreate, AIMessageResponse,
     AIConversationResponse, SessionAnalysisCreate, SessionAnalysisResponse,
     LearningInsightResponse, StudyPlanCreate, StudyPlan, SkillLevel
 )
-from ..services.ai_companion_service import AICompanionService
+from services.ai_companion_service import AICompanionService
 
 router = APIRouter(prefix="/api/ai", tags=["AI Learning Companion"])
 ai_service = AICompanionService()
