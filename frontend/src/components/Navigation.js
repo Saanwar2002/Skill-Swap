@@ -17,7 +17,7 @@ import {
   BellIcon,
   UserGroupIcon,
   LightBulbIcon,
-  BrainIcon
+  CpuChipIcon as BrainIcon
 } from '@heroicons/react/24/outline';
 
 const Navigation = () => {
