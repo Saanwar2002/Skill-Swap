@@ -4,7 +4,7 @@ import {
   AcademicCapIcon,
   TrophyIcon,
   ClockIcon,
-  BrainIcon,
+  CpuChipIcon as BrainIcon,
   SparklesIcon,
   ArrowUpIcon,
   ArrowDownIcon,
