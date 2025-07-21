@@ -22,6 +22,7 @@ from routes.community_routes import create_community_router
 from routes.webrtc_routes import create_webrtc_router
 from routes.notification_routes import create_notification_router
 from routes.recommendation_routes import create_recommendation_router
+from routes.ai_routes import router as ai_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
