@@ -16,6 +16,7 @@ import Sessions from "./pages/Sessions";
 import Messages from "./pages/Messages";
 import Leaderboard from "./pages/Leaderboard";
 import Recommendations from "./pages/Recommendations";
+import LearningDashboard from "./pages/LearningDashboard";
 
 function App() {
   return (
