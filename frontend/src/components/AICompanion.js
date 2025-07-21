@@ -36,6 +36,7 @@ const AICompanion = ({ isOpen, onToggle, className = '' }) => {
   const [quickHelpMode, setQuickHelpMode] = useState(null);
   const [skillContext, setSkillContext] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [localMessages, setLocalMessages] = useState([]);
   
   const messagesEndRef = useRef(null);
 
