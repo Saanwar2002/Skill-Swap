@@ -7,7 +7,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 import asyncio
 
-from ..models import (
+from models import (
     AIConversationType, AIMessage, AIConversation, SessionAnalysis,
     LearningInsight, SkillAssessment, StudyPlan, LearningAnalytics,
     AIMessageCreate, AIMessageResponse, SessionAnalysisCreate,
