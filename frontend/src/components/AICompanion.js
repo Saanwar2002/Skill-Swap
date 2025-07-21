@@ -6,7 +6,7 @@ import {
   XMarkIcon,
   AcademicCapIcon,
   LightBulbIcon,
-  BrainIcon,
+  CpuChipIcon as BrainIcon,
   RocketLaunchIcon,
   DocumentTextIcon,
   QuestionMarkCircleIcon
