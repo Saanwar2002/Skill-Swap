@@ -1118,3 +1118,326 @@ class LearningGoalUpdate(BaseModel):
     weekly_session_target: Optional[int] = None
     current_progress: Optional[float] = None
     is_active: Optional[bool] = None
+
+
+# AI Learning Companion Models
+class AIConversationType(str, Enum):
+    LEARNING_ASSISTANCE = "learning_assistance"
+    SESSION_ANALYSIS = "session_analysis"
+    SKILL_GUIDANCE = "skill_guidance"
+    PRACTICE_FEEDBACK = "practice_feedback"
+    CAREER_ADVICE = "career_advice"
+    GENERAL_HELP = "general_help"
+
+
+class AIMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    conversation_id: str
+    user_id: str
+    role: str  # "user" or "assistant"
+    content: str
+    context_data: Dict[str, Any] = {}  # Session data, skill info, etc.
+    ai_confidence: Optional[float] = None  # AI confidence in response
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Metadata for learning analytics
+    conversation_type: Optional[AIConversationType] = None
+    skill_context: Optional[str] = None  # Skill being discussed
+    session_context: Optional[str] = None  # Session being analyzed
+
+
+class AIConversation(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    conversation_type: AIConversationType
+    title: str
+    summary: Optional[str] = None  # AI-generated summary
+    
+    # Context and metadata
+    skill_context: Optional[str] = None
+    session_context: Optional[str] = None
+    learning_goal_context: Optional[str] = None
+    
+    # Conversation state
+    is_active: bool = True
+    message_count: int = 0
+    last_message_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Analytics
+    user_satisfaction_rating: Optional[float] = None  # 1-5 rating
+    topics_discussed: List[str] = []
+    insights_generated: List[str] = []
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SessionAnalysis(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    user_id: str  # Can be teacher or learner
+    
+    # AI Analysis Results
+    transcript: Optional[str] = None  # Session transcript
+    summary: str  # AI-generated session summary
+    key_topics_covered: List[str] = []
+    learning_objectives_achieved: List[str] = []
+    knowledge_gaps_identified: List[str] = []
+    
+    # Performance Analysis
+    comprehension_score: Optional[float] = None  # 0-100
+    engagement_score: Optional[float] = None  # 0-100
+    participation_score: Optional[float] = None  # 0-100
+    
+    # Personalized Insights
+    strengths_identified: List[str] = []
+    areas_for_improvement: List[str] = []
+    next_steps_suggested: List[str] = []
+    practice_recommendations: List[str] = []
+    
+    # Follow-up Actions
+    homework_suggested: Optional[str] = None
+    resources_recommended: List[Dict[str, str]] = []  # {"title", "url", "type"}
+    skills_to_practice: List[str] = []
+    
+    # AI Processing Metadata
+    ai_model_used: str = "webllm"
+    analysis_confidence: float = 0.0  # AI confidence in analysis
+    processing_time: Optional[float] = None  # Time taken for analysis
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_reviewed: bool = False  # Whether user has reviewed the analysis
+
+
+class LearningInsight(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    insight_type: str  # "skill_progress", "learning_pattern", "goal_achievement", etc.
+    title: str
+    description: str
+    
+    # Context and Data
+    skill_context: Optional[str] = None
+    session_context: Optional[str] = None
+    time_period: Optional[str] = None  # "last_week", "last_month", etc.
+    data_points: Dict[str, Any] = {}  # Supporting data for the insight
+    
+    # Recommendations
+    action_items: List[str] = []
+    resource_suggestions: List[Dict[str, str]] = []
+    next_milestone: Optional[str] = None
+    
+    # Engagement
+    is_viewed: bool = False
+    is_helpful: Optional[bool] = None  # User feedback
+    user_notes: Optional[str] = None
+    
+    # AI Metadata
+    confidence_score: float = 0.0
+    generated_by: str = "webllm"
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    viewed_at: Optional[datetime] = None
+
+
+class SkillAssessment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    skill_id: str
+    skill_name: str
+    
+    # Assessment Details
+    assessment_type: str  # "ai_generated", "peer_review", "self_assessment"
+    questions: List[Dict[str, Any]] = []  # Assessment questions and answers
+    
+    # Results
+    score: float = 0.0  # 0-100
+    level_assessment: SkillLevel
+    strengths: List[str] = []
+    weaknesses: List[str] = []
+    
+    # Recommendations
+    study_plan: List[str] = []
+    recommended_sessions: List[str] = []
+    practice_exercises: List[str] = []
+    
+    # Progress Tracking
+    previous_score: Optional[float] = None
+    improvement_rate: Optional[float] = None
+    time_to_next_level: Optional[int] = None  # Estimated days
+    
+    # AI Analysis
+    ai_confidence: float = 0.0
+    assessment_notes: Optional[str] = None
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: Optional[datetime] = None
+
+
+class StudyPlan(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    skill_id: str
+    skill_name: str
+    target_level: SkillLevel
+    current_level: SkillLevel
+    
+    # Plan Details
+    title: str
+    description: str
+    estimated_duration_weeks: int
+    
+    # Learning Path
+    modules: List[Dict[str, Any]] = []  # Structured learning modules
+    milestones: List[Dict[str, Any]] = []  # Progress checkpoints
+    resources: List[Dict[str, str]] = []  # External resources
+    
+    # Schedule
+    weekly_time_commitment: int = 5  # Hours per week
+    preferred_session_length: int = 60  # Minutes
+    flexibility_level: str = "medium"  # "low", "medium", "high"
+    
+    # Progress Tracking
+    current_module: int = 0
+    completion_percentage: float = 0.0
+    modules_completed: List[int] = []
+    
+    # AI Personalization
+    generated_by: str = "webllm"
+    personalization_factors: Dict[str, Any] = {}
+    adaptation_history: List[Dict[str, Any]] = []  # How plan was adapted over time
+    
+    # Status
+    is_active: bool = True
+    is_paused: bool = False
+    pause_reason: Optional[str] = None
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+
+
+class LearningAnalytics(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    period_type: str  # "daily", "weekly", "monthly", "quarterly"
+    period_start: datetime
+    period_end: datetime
+    
+    # Learning Metrics
+    total_study_time: float = 0.0  # Hours
+    sessions_completed: int = 0
+    sessions_taught: int = 0
+    skills_practiced: List[str] = []
+    
+    # Progress Metrics
+    skill_improvements: Dict[str, float] = {}  # skill_name -> improvement_score
+    goals_achieved: int = 0
+    milestones_reached: int = 0
+    assessments_completed: int = 0
+    
+    # Engagement Metrics
+    ai_conversations: int = 0
+    insights_viewed: int = 0
+    recommendations_followed: int = 0
+    study_plan_adherence: float = 0.0  # 0-100%
+    
+    # Performance Indicators
+    avg_comprehension_score: float = 0.0
+    avg_engagement_score: float = 0.0
+    learning_velocity: float = 0.0  # Rate of skill acquisition
+    consistency_score: float = 0.0  # How consistent the learning pattern is
+    
+    # AI-Generated Insights
+    key_insights: List[str] = []
+    recommendations: List[str] = []
+    trends_identified: List[str] = []
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# AI Companion Request/Response Models
+class AIMessageCreate(BaseModel):
+    conversation_id: Optional[str] = None  # If None, creates new conversation
+    conversation_type: AIConversationType = AIConversationType.GENERAL_HELP
+    content: str
+    context_data: Dict[str, Any] = {}
+    skill_context: Optional[str] = None
+    session_context: Optional[str] = None
+
+
+class AIMessageResponse(BaseModel):
+    id: str
+    conversation_id: str
+    role: str
+    content: str
+    ai_confidence: Optional[float]
+    created_at: datetime
+    conversation_type: AIConversationType
+    skill_context: Optional[str]
+    session_context: Optional[str]
+
+
+class AIConversationResponse(BaseModel):
+    id: str
+    conversation_type: AIConversationType
+    title: str
+    summary: Optional[str]
+    message_count: int
+    last_message_at: datetime
+    topics_discussed: List[str]
+    created_at: datetime
+    is_active: bool
+
+
+class SessionAnalysisCreate(BaseModel):
+    session_id: str
+    transcript: Optional[str] = None
+    additional_context: Dict[str, Any] = {}
+
+
+class SessionAnalysisResponse(BaseModel):
+    id: str
+    session_id: str
+    summary: str
+    key_topics_covered: List[str]
+    learning_objectives_achieved: List[str]
+    knowledge_gaps_identified: List[str]
+    comprehension_score: Optional[float]
+    engagement_score: Optional[float]
+    strengths_identified: List[str]
+    areas_for_improvement: List[str]
+    next_steps_suggested: List[str]
+    practice_recommendations: List[str]
+    homework_suggested: Optional[str]
+    resources_recommended: List[Dict[str, str]]
+    analysis_confidence: float
+    created_at: datetime
+
+
+class LearningInsightResponse(BaseModel):
+    id: str
+    insight_type: str
+    title: str
+    description: str
+    action_items: List[str]
+    resource_suggestions: List[Dict[str, str]]
+    confidence_score: float
+    created_at: datetime
+    is_viewed: bool
+
+
+class SkillAssessmentCreate(BaseModel):
+    skill_id: str
+    assessment_type: str = "ai_generated"
+    questions: List[Dict[str, Any]] = []
+
+
+class StudyPlanCreate(BaseModel):
+    skill_id: str
+    target_level: SkillLevel
+    estimated_duration_weeks: Optional[int] = 8
+    weekly_time_commitment: Optional[int] = 5
+    preferred_session_length: Optional[int] = 60
+    flexibility_level: Optional[str] = "medium"
