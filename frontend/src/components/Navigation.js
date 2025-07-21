@@ -37,6 +37,7 @@ const Navigation = () => {
     { name: 'Community', href: '/community', icon: UserGroupIcon },
     { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
     { name: 'Sessions', href: '/sessions', icon: StarIcon },
+    { name: 'AI Learning', href: '/ai-learning', icon: BrainIcon },
     { name: 'Recommendations', href: '/recommendations', icon: LightBulbIcon },
     { name: 'Leaderboard', href: '/leaderboard', icon: TrophyIcon },
   ];
