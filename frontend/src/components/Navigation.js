@@ -16,7 +16,8 @@ import {
   TrophyIcon,
   BellIcon,
   UserGroupIcon,
-  LightBulbIcon
+  LightBulbIcon,
+  BrainIcon
 } from '@heroicons/react/24/outline';
 
 const Navigation = () => {
