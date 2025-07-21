@@ -117,6 +117,17 @@ function App() {
               }
             />
             
+            <Route
+              path="/ai-learning"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <LearningDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
