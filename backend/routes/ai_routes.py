@@ -10,7 +10,7 @@ from models import (
 )
 from services.ai_companion_service import AICompanionService
 
-router = APIRouter(prefix="/api/ai", tags=["AI Learning Companion"])
+router = APIRouter(prefix="/ai", tags=["AI Learning Companion"])
 ai_service = AICompanionService()
 
 
