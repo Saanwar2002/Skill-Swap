@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@mlc-ai/web-llm": "^0.2.79",
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.8.4",
     "cra-template": "1.2.0",
