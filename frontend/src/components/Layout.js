@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navigation from './Navigation';
+import AICompanion from './AICompanion';
 import { Toaster } from 'react-hot-toast';
 
 const Layout = ({ children }) => {
+  const [isAICompanionOpen, setIsAICompanionOpen] = useState(false);
+
+  const toggleAICompanion = () => {
+    setIsAICompanionOpen(!isAICompanionOpen);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -11,6 +18,13 @@ const Layout = ({ children }) => {
           {children}
         </div>
       </main>
+      
+      {/* AI Learning Companion */}
+      <AICompanion 
+        isOpen={isAICompanionOpen} 
+        onToggle={toggleAICompanion}
+      />
+      
       <Toaster 
         position="top-right"
         toastOptions={{
