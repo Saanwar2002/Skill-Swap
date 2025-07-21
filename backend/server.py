@@ -22,7 +22,7 @@ from routes.community_routes import create_community_router
 from routes.webrtc_routes import create_webrtc_router
 from routes.notification_routes import create_notification_router
 from routes.recommendation_routes import create_recommendation_router
-from routes.ai_routes import router as ai_router
+from routes.ai_routes import create_ai_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -84,7 +84,7 @@ api_router.include_router(create_community_router(db))
 api_router.include_router(create_webrtc_router(db))
 api_router.include_router(create_notification_router(db), prefix="/notifications", tags=["notifications"])
 api_router.include_router(create_recommendation_router(db), prefix="/recommendations", tags=["recommendations"])
-api_router.include_router(ai_router)
+api_router.include_router(create_ai_router(db))
 
 # Include the main router in the app
 app.include_router(api_router)
