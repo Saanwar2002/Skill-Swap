@@ -116,7 +116,7 @@ const AICompanion = ({ isOpen, onToggle, className = '' }) => {
       }
 
       // Create a quick conversation display
-      setMessages([
+      setLocalMessages([
         { role: 'user', content: inputMessage, created_at: new Date() },
         { role: 'assistant', content: response.response || response.feedback, created_at: new Date() }
       ]);
