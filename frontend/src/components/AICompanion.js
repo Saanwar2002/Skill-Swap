@@ -280,7 +280,7 @@ const AICompanion = ({ isOpen, onToggle, className = '' }) => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 && !currentConversation && (
+            {(messages.length === 0 && localMessages.length === 0) && !currentConversation && (
               <div className="text-center py-8">
                 <BrainIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h4 className="font-semibold text-gray-600 mb-2">AI Learning Companion</h4>
@@ -290,7 +290,7 @@ const AICompanion = ({ isOpen, onToggle, className = '' }) => {
               </div>
             )}
 
-            {messages.map((message, index) => (
+            {(localMessages.length > 0 ? localMessages : messages).map((message, index) => (
               <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] p-3 rounded-2xl ${
                   message.role === 'user'
